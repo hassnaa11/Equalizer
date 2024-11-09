@@ -15,6 +15,7 @@ class Equilizer(QMainWindow):
        self.ui = Ui_MainWindow()
        self.ui.setupUi(self)
        self.ecg_mode_selected = False
+    
        self.sliders_frames = {
             "Uniform Mode": self.ui.uniform_sliders_frame,
             "Animal Mode": self.ui.animals_sliders_frame,
@@ -81,10 +82,10 @@ class Equilizer(QMainWindow):
         self.sliders_frames[text].setVisible(True)
         if text == 'ECG Mode':
             self.ecg_mode_selected = True
-            self.ui.original_signal_viewer.xRange = [0, 1e3]
-            self.ui.original_signal_viewer.yRange = [-2, 2]
-            self.ui.equalized_signal_viewer.xRange = [0, 1e3]
-            self.ui.equalized_signal_viewer.yRange = [-2, 2]
+            self.original_signal_viewer.xRange = [0, 1e3]
+            self.original_signal_viewer.yRange = [-2, 2]
+            self.equalized_signal_viewer.xRange = [0, 1e3]
+            self.equalized_signal_viewer.yRange = [-2, 2]
         else:
             self.ecg_mode_selected = False
 
@@ -92,5 +93,5 @@ class Equilizer(QMainWindow):
 if __name__ == "__main__":
     app = QApplication([])
     ui = Equilizer()
-    ui.show()
+    ui.showMaximized()
     app.exec_()        

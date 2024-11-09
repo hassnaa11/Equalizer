@@ -264,7 +264,7 @@ QComboBox::drop-down {
 }
 
 QComboBox::down-arrow {
-    image: url(icons/caret-down copy.svg);
+    image: url(icons/icons/caret-down copy.svg);
 }
 
 QComboBox::down-arrow:on { /* shift the arrow when popup is open */
@@ -882,6 +882,40 @@ border:none;</string>
         </widget>
        </item>
        <item>
+        <widget class="QFrame" name="frequency_frame">
+         <property name="frameShape">
+          <enum>QFrame::StyledPanel</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Raised</enum>
+         </property>
+         <layout class="QGridLayout" name="gridLayout">
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <property name="spacing">
+           <number>0</number>
+          </property>
+          <item row="0" column="0">
+           <widget class="QGraphicsView" name="frequency_graphics_view">
+            <property name="styleSheet">
+             <string notr="true"/>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+      <item>
         <widget class="QFrame" name="equalized_spectro_frame">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
