@@ -362,9 +362,7 @@ class Equilizer(QMainWindow):
         # modified_signal = apply_slider_changes(self.ecg_signal, slider_values)
         # self.ui.equalized_graphics_view.plot(modified_signal[:1000], clear=True)  # Update graph
         # modified_signal = apply_slider_changes(self.ecg_signal, slider_values)
-        self.ui.equalized_graphics_view.plot(
-            modified_signal[:1000], clear=True
-        )  # Update graph
+        # self.ui.equalized_graphics_view.plot(self.equalized_signal[:1000], clear=True)  # Update graph
         self.plot_frequency_graph()
 
     def update_uniform_slider(self):
