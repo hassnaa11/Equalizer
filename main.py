@@ -10,6 +10,8 @@ import numpy as np
 import scipy.io.wavfile as wav
 import pyaudio
 from arrhythmia_handler import detect_arrhythmias, apply_slider_changes
+
+
 def bandpass_filter(data, lowcut, highcut, fs, order=5):
     """
     Apply a bandpass filter to the given data.
@@ -76,18 +78,41 @@ class Equilizer(QMainWindow):
         for sliders_frame in self.sliders_frames:
                 self.sliders_frames[sliders_frame].setVisible(False)
         self.sliders_frames["Uniform Mode"].setVisible(True)
-        self.ranges_sliders = {
-                self.ui.uniform_slider_1: (0, 200),
-                self.ui.uniform_slider_2: (200, 400),
-                self.ui.uniform_slider_3: (400, 600),
-                self.ui.uniform_slider_4: (600, 800),
-                self.ui.uniform_slider_5: (800, 1000),
-                self.ui.uniform_slider_6: (1000, 1200),
-                self.ui.uniform_slider_7: (1200, 1400),
-                self.ui.uniform_slider_8: (1400, 1600),
-                self.ui.uniform_slider_9: (1600, 1800),
-                self.ui.uniform_slider_10: (1800, 2000),
+        self.uniform_sliders = {
+                1: self.ui.uniform_slider_1,
+                2: self.ui.uniform_slider_2,
+                3: self.ui.uniform_slider_3,
+                4: self.ui.uniform_slider_4,
+                5: self.ui.uniform_slider_5,
+                6: self.ui.uniform_slider_6,
+                7: self.ui.uniform_slider_7,
+                8: self.ui.uniform_slider_8,
+                9: self.ui.uniform_slider_9,
+                10: self.ui.uniform_slider_10,
             }
+        self.uniform_ranges ={
+            1: (1050, 1150),
+            2: (1150, 1250),
+            3: (1250, 1350),
+            4: (1350, 1450), 
+            5: (1450, 1550), 
+            6: (1550, 1650),
+            7: (1650, 1750), 
+            8: (1750, 1850),
+            9: (1850, 1950),
+            10: (1950, 2050)}
+        
+        self.ui.uniform_slider_1.valueChanged.connect(self.update_uniform_slider)
+        self.ui.uniform_slider_2.valueChanged.connect(self.update_uniform_slider)
+        self.ui.uniform_slider_3.valueChanged.connect(self.update_uniform_slider)
+        self.ui.uniform_slider_4.valueChanged.connect(self.update_uniform_slider)
+        self.ui.uniform_slider_5.valueChanged.connect(self.update_uniform_slider)
+        self.ui.uniform_slider_6.valueChanged.connect(self.update_uniform_slider)
+        self.ui.uniform_slider_7.valueChanged.connect(self.update_uniform_slider)
+        self.ui.uniform_slider_8.valueChanged.connect(self.update_uniform_slider)
+        self.ui.uniform_slider_9.valueChanged.connect(self.update_uniform_slider)
+        self.ui.uniform_slider_10.valueChanged.connect(self.update_uniform_slider)
+        
         #    self.ecg_sliders = {
         #     self.ui.p_wave_arrhythmia_slider: (5, 10),
         #     self.ui.sv_arrhythmia_slider: (6, 22),
@@ -112,6 +137,8 @@ class Equilizer(QMainWindow):
             0.38376: self.ui.sr_arrhythmia_slider
         }
         self.ui.mode_comboBox.currentTextChanged.connect(self.change_sliders_for_modes)
+        
+        
     def set_home_view(self):
             if self.ecg_mode_selected:
                 self.ui.original_graphics_view.xRange = [0, 1e3]
@@ -121,6 +148,8 @@ class Equilizer(QMainWindow):
             else:
                 self.original_signal_viewer.home_view()
                 self.equalized_signal_viewer.home_view()
+                
+                
     def change_sliders_for_modes(self, text):
             for sliders_frame in self.sliders_frames:
                 self.sliders_frames[sliders_frame].setVisible(False)
@@ -133,6 +162,8 @@ class Equilizer(QMainWindow):
                 self.ui.equalized_graphics_view.yRange = [-2, 2]
             else:
                 self.ecg_mode_selected = False
+                
+                
     def open_file(self):
         file_name, _ = QFileDialog.getOpenFileName(self, "Open WAV", "", "WAV Files (*.wav);;All Files (*)")
         if file_name:
@@ -141,7 +172,9 @@ class Equilizer(QMainWindow):
             self.index = 0
             self.play_audio=True
             self.timer.start(50)  
-            print(file_name)  
+            print(file_name) 
+            
+             
     def plot_original_data(self, file_name):
             self.fs, self.data = wav.read(file_name)  # Read the WAV file
             if len(self.data.shape) > 1:
@@ -152,7 +185,7 @@ class Equilizer(QMainWindow):
                 # Handle ECG signal processing
                 self.ecg_signal = self.data
                 self.detect_and_update_ecg()
-            elif mode == "Musical Mode":
+            elif mode == "Musical Mode" or mode == "Uniform Mode":
                 self.audio_stream = pyaudio.PyAudio()
                 self.stream = self.audio_stream.open(format=pyaudio.paInt16,
                                                     channels=1,
@@ -165,10 +198,29 @@ class Equilizer(QMainWindow):
                     "Violin": (200, 3500)
                 }
                 self.filtered_data = {}
-                for instrument, (low, high) in self.instruments.items():
-                    self.filtered_data[instrument] = bandpass_filter(self.data, low, high, self.fs)
-                    print(self.filtered_data)
+                if mode == "Musical Mode":
+                    for instrument, (low, high) in self.instruments.items():
+                        self.filtered_data[instrument] = bandpass_filter(self.data, low, high, self.fs)
+                        print(self.filtered_data)
+                else:
+                    for slider_number, (low, high) in self.uniform_ranges.items():
+                        self.filtered_data[slider_number] = bandpass_filter(self.data, low, high, self.fs)  
+                        print(self.filtered_data)  
                 self.ui.equalized_graphics_view.plot(self.data[:self.chunk_size], clear=True)
+                
+            # elif mode == "Uniform Mode":
+            #     self.audio_stream = pyaudio.PyAudio()
+            #     self.stream = self.audio_stream.open(format=pyaudio.paInt16,
+            #                                         channels=1,
+            #                                         rate=self.fs,
+            #                                         output=True)
+            #     self.filtered_data = {}
+            #     for instrument, (low, high) in self.instruments.items():
+            #         self.filtered_data[instrument] = bandpass_filter(self.data, low, high, self.fs)
+            #         print(self.filtered_data)
+            #     self.ui.equalized_graphics_view.plot(self.data[:self.chunk_size], clear=True)
+                
+                
     def update_plot(self):
             mode = self.ui.mode_comboBox.currentText()
             if self.index + self.chunk_size <= len(self.data):
@@ -185,7 +237,8 @@ class Equilizer(QMainWindow):
                         # Apply modifications and plot the equalized ECG signal
                         chunk_equalized = self.equalized_signal[self.index:self.index + self.chunk_size]
                         self.ui.equalized_graphics_view.plot(chunk_equalized, clear=True)
-                elif mode == "Musical Mode":
+                
+                elif mode == "Musical Mode" or mode == "Uniform Mode":
                     # Get the next chunk of the original data
                     chunk = self.data[self.index:self.index + self.chunk_size]
                     # Plot the original signal
@@ -200,6 +253,7 @@ class Equilizer(QMainWindow):
                     if self.play_audio:
                         self.stream.write(chunk.astype(np.int16).tobytes())
                     self.index += self.chunk_size
+                   
             else:
                 # Stop the timer and audio stream when the end of the file is reached
                 self.timer.stop()
@@ -207,19 +261,26 @@ class Equilizer(QMainWindow):
                     self.stream.stop_stream()
                     self.stream.close()
                     self.audio_stream.terminate()
+                    
+                    
     def update_instrument(self, instrument):
             slider_value = self.sliders[instrument].value() / 100
             self.equalized_signal = np.zeros_like(self.data, dtype=np.float32)
             # Sum up the filtered signals with their respective slider values
             for inst, _ in self.instruments.items():
+                print(self.sliders[inst].value())
                 instrument_slider_value = self.sliders[inst].value() / 100
                 self.equalized_signal += instrument_slider_value * self.filtered_data[inst]
             self.state=True
+            
+            
     def control_sound(self,btn):
         if btn=="equalized_btn":
             self.play_equalized_audio=False
         else:
             self.play_audio=False
+            
+            
     def detect_and_update_ecg(self):
         if self.ecg_signal is None:
             return
@@ -232,6 +293,8 @@ class Equilizer(QMainWindow):
         self.ui.original_graphics_view.plot(self.ecg_signal[:1000], clear=True)  # Plot first 1000 samples
         modified_signal = apply_slider_changes(self.ecg_signal, detection_results)
         self.ui.equalized_graphics_view.plot(modified_signal[:1000], clear=True)
+        
+        
     def on_slider_change(self):
         if self.ecg_signal is None:
             return
@@ -244,6 +307,22 @@ class Equilizer(QMainWindow):
         # Apply slider changes and update the equalized graph
         modified_signal = apply_slider_changes(self.ecg_signal, slider_values)
         self.ui.equalized_graphics_view.plot(modified_signal[:1000], clear=True)  # Update graph
+        
+        
+    def update_uniform_slider(self):  
+        sender_slider =  self.sender()  
+        slider_value = sender_slider.value()
+        print(sender_slider)
+        print("value: ", slider_value)        
+        self.equalized_signal = np.zeros_like(self.data, dtype=np.float32)
+        # Sum up the filtered signals with their respective slider values
+        for slider_number, slider in self.uniform_sliders.items():
+            slider_value = slider.value() / 10 
+            self.equalized_signal += slider_value * self.filtered_data[slider_number]
+        self.state=True
+        
+        
+        
 if __name__ == "__main__":
     app = QApplication([])
     ui = Equilizer()
