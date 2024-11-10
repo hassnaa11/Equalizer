@@ -46,7 +46,8 @@ class Equilizer(QMainWindow):
         self.state=False
         self.timer.timeout.connect(self.update_plot)
         self.audio_stream = None
-        self.play_equalized_audio=True
+        self.play_equalized_audio=False
+        self.play_audio=False
         self.data = None  # Holds the audio data
         self.index = 0 
         self.chunk_size = 3000
@@ -169,7 +170,7 @@ class Equilizer(QMainWindow):
             self.from_file = True 
             self.plot_original_data(file_name)   
             self.index = 0
-            self.play_audio=True
+            # self.play_audio=False
             self.timer.start(50)  
             print(file_name) 
             
@@ -206,19 +207,7 @@ class Equilizer(QMainWindow):
                         self.filtered_data[slider_number] = bandpass_filter(self.data, low, high, self.fs)  
                         print(self.filtered_data)  
                 self.ui.equalized_graphics_view.plot(self.data[:self.chunk_size], clear=True)
-                
-            # elif mode == "Uniform Mode":
-            #     self.audio_stream = pyaudio.PyAudio()
-            #     self.stream = self.audio_stream.open(format=pyaudio.paInt16,
-            #                                         channels=1,
-            #                                         rate=self.fs,
-            #                                         output=True)
-            #     self.filtered_data = {}
-            #     for instrument, (low, high) in self.instruments.items():
-            #         self.filtered_data[instrument] = bandpass_filter(self.data, low, high, self.fs)
-            #         print(self.filtered_data)
-            #     self.ui.equalized_graphics_view.plot(self.data[:self.chunk_size], clear=True)
-                
+
                 
     def update_plot(self):
             mode = self.ui.mode_comboBox.currentText()
@@ -276,9 +265,11 @@ class Equilizer(QMainWindow):
             
     def control_sound(self,btn):
         if btn=="equalized_btn":
-            self.play_equalized_audio=False
-        else:
+            self.play_equalized_audio= not self.play_equalized_audio
             self.play_audio=False
+        else:
+            self.play_audio= not self.play_audio
+            self.play_equalized_audio=False
             
             
     def detect_and_update_ecg(self):
