@@ -90,17 +90,18 @@ class Equilizer(QMainWindow):
                 9: self.ui.uniform_slider_9,
                 10: self.ui.uniform_slider_10,
             }
+        
         self.uniform_ranges ={
-            1: (1050, 1150),
-            2: (1150, 1250),
-            3: (1250, 1350),
-            4: (1350, 1450), 
-            5: (1450, 1550), 
-            6: (1550, 1650),
-            7: (1650, 1750), 
-            8: (1750, 1850),
-            9: (1850, 1950),
-            10: (1950, 2050)}
+            1: (1000, 1100),
+            2: (1100, 1200),
+            3: (1200, 1300),
+            4: (1300, 1400), 
+            5: (1400, 1500), 
+            6: (1500, 1600),
+            7: (1600, 1700), 
+            8: (1700, 1800),
+            9: (1800, 1900),
+            10: (1900, 2000)}
         
         self.ui.uniform_slider_1.valueChanged.connect(self.update_uniform_slider)
         self.ui.uniform_slider_2.valueChanged.connect(self.update_uniform_slider)
