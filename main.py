@@ -164,7 +164,7 @@ class Equilizer(QMainWindow):
                                              output=True)
         self.instruments = {
             "Drums": (100, 1000),
-            "Guitar": (80, 1200),
+            "Guitar":(30 , 4000) ,
             "Saxophone": (250, 1200),
             "Violin": (200, 3500)
         }
