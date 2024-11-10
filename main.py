@@ -39,10 +39,13 @@ class Equilizer(QMainWindow):
         self.ui.setupUi(self)
         self.ecg_mode_selected = False
         self.ecg_signal = None  # To hold the ECG signal data
+        self.equalized_signal = None  # To store modified signal
+
         # Connect the ECG sliders
         self.ui.vf_arrhythmia_slider.valueChanged.connect(self.on_slider_change)
         self.ui.mi_arrhythmia_slider.valueChanged.connect(self.on_slider_change)
         self.ui.sr_arrhythmia_slider.valueChanged.connect(self.on_slider_change)
+
         # musical mode
         self.timer = QTimer(self)
         self.state = False
@@ -157,11 +160,11 @@ class Equilizer(QMainWindow):
             self.ui.guitar_slider: "Guitar",
             self.ui.Violin_slider: "Violin",
         }
-        self.ecg_arrs_max_f_dict = {
-            0.96: self.ui.vf_arrhythmia_slider,
-            0.96459: self.ui.mi_arrhythmia_slider,
-            0.38376: self.ui.sr_arrhythmia_slider,
-        }
+        # self.ecg_arrs_max_f_dict = {
+        #     0.96: self.ui.vf_arrhythmia_slider,
+        #     0.96459: self.ui.mi_arrhythmia_slider,
+        #     0.38376: self.ui.sr_arrhythmia_slider
+        # }
         self.ui.mode_comboBox.currentTextChanged.connect(self.change_sliders_for_modes)
 
     def set_home_view(self):
@@ -310,34 +313,55 @@ class Equilizer(QMainWindow):
         if self.ecg_signal is None:
             return
         detection_results = detect_arrhythmias(self.ecg_signal)
+
+        # Handling potential NaN values with np.nan_to_num
+        atrial_fibrillation = np.nan_to_num(detection_results['atrial_fibrillation'], nan=0.0)
+        myocardial_infarction = np.nan_to_num(detection_results['myocardial_infarction'], nan=0.0)
+        sinus_rhythm = np.nan_to_num(detection_results['sinus_rhythm'], nan=0.0)
+
+        # Setting slider values
+        self.ui.vf_arrhythmia_slider.setValue(int(atrial_fibrillation * 100))
+        self.ui.mi_arrhythmia_slider.setValue(int(myocardial_infarction * 100))
+        self.ui.sr_arrhythmia_slider.setValue(int(sinus_rhythm * 100))
+
         # Update sliders based on detection results
-        self.ui.vf_arrhythmia_slider.setValue(
-            int(detection_results["atrial_fibrillation"] * 100)
-        )
-        self.ui.mi_arrhythmia_slider.setValue(
-            int(detection_results["myocardial_infarction"] * 100)
-        )
-        self.ui.sr_arrhythmia_slider.setValue(
-            int(detection_results["sinus_rhythm"] * 100)
-        )
+        # self.ui.vf_arrhythmia_slider.setValue(int(detection_results['atrial_fibrillation'] * 100))
+        # self.ui.mi_arrhythmia_slider.setValue(int(detection_results['myocardial_infarction'] * 100))
+        # self.ui.sr_arrhythmia_slider.setValue(int(detection_results['sinus_rhythm'] * 100))
         # Plot initial signals
-        self.ui.original_graphics_view.plot(
-            self.ecg_signal[:1000], clear=True
-        )  # Plot first 1000 samples
-        modified_signal = apply_slider_changes(self.ecg_signal, detection_results)
-        self.ui.equalized_graphics_view.plot(modified_signal[:1000], clear=True)
+        self.ui.original_graphics_view.plot(self.ecg_signal[:1000], clear=True)  # Plot first 1000 samples
+        self.equalized_signal = apply_slider_changes(self.ecg_signal, {
+        'normal': 1.0,
+        'atrial_fibrillation': 1.0,
+        'myocardial_infarction': 1.0,
+        'sinus_rhythm': 1.0
+        })
+        self.ui.equalized_graphics_view.plot(self.equalized_signal[:1000], clear=True)
+        # modified_signal = apply_slider_changes(self.ecg_signal, detection_results)
+        # self.ui.equalized_graphics_view.plot(modified_signal[:1000], clear=True)
 
     def on_slider_change(self):
+        print("Slider value changed!")
+
         if self.ecg_signal is None:
             return
+
         # Get current slider values and normalize to [0, 1] range
         slider_values = {
             "atrial_fibrillation": self.ui.vf_arrhythmia_slider.value() / 100,
             "myocardial_infarction": self.ui.mi_arrhythmia_slider.value() / 100,
             "sinus_rhythm": self.ui.sr_arrhythmia_slider.value() / 100,
         }
+        print("Current slider values:", slider_values)
+
         # Apply slider changes and update the equalized graph
-        modified_signal = apply_slider_changes(self.ecg_signal, slider_values)
+        self.equalized_signal = apply_slider_changes(self.ecg_signal, slider_values)
+        print("Equalized signal (first 10 samples):", self.equalized_signal[:10])
+
+        self.ui.equalized_graphics_view.plot(self.equalized_signal[:1000], clear=True)
+        # modified_signal = apply_slider_changes(self.ecg_signal, slider_values)
+        # self.ui.equalized_graphics_view.plot(modified_signal[:1000], clear=True)  # Update graph
+        # modified_signal = apply_slider_changes(self.ecg_signal, slider_values)
         self.ui.equalized_graphics_view.plot(
             modified_signal[:1000], clear=True
         )  # Update graph
