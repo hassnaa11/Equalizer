@@ -394,11 +394,6 @@ class Equilizer(QMainWindow):
         # normalize the magnitude
         self.original_magnitude = self.original_magnitude / np.max(self.original_magnitude)
 
-        # frequency graph limits
-        self.ui.frequency_graphics_view.setLimits(yMin = np.min(self.original_magnitude), yMax = np.max(self.original_magnitude) + 1)
-        # if mode ==:
-        self.ui.frequency_graphics_view.setLimits(xMin = 1050, xMax = 2100)
-
     
     def plot_frequency_graph(self):
         # Start with the original magnitude values and adjust based on slider values
@@ -422,6 +417,14 @@ class Equilizer(QMainWindow):
         frequencies_array = frequencies_array[:min_length]
         magnitude_array = magnitude_array[:min_length]
 
+        # frequency graph limits
+        self.ui.frequency_graphics_view.setLimits(yMin = np.min(magnitude_array), yMax = np.max(magnitude_array) + 1)
+        mode = self.ui.mode_comboBox.currentText()
+        if mode == "Uniform Mode":
+            self.ui.frequency_graphics_view.setLimits(xMin = 1050, xMax = 2100)
+        elif mode == "Musical Mode":
+            self.ui.frequency_graphics_view.setLimits(xMin = 80, xMax = 5000)
+        
         # clear the previous graph and plot updated graph
         self.ui.frequency_graphics_view.clear()
         self.ui.frequency_graphics_view.plot(frequencies_array, magnitude_array)
