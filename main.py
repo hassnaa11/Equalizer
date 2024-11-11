@@ -10,6 +10,7 @@ import numpy as np
 import scipy.io.wavfile as wav
 import pyaudio
 from arrhythmia_handler import detect_arrhythmias, apply_slider_changes
+from Spectrogram import SpectrogramViewer
 
 
 def bandpass_filter(data, lowcut, highcut, fs, order=5):
@@ -177,8 +178,30 @@ class Equilizer(QMainWindow):
         #     0.38376: self.ui.sr_arrhythmia_slider
         # }
         self.ui.mode_comboBox.currentTextChanged.connect(self.change_sliders_for_modes)
-     
         
+        self.show_spectrograms = True
+        self.sampling_rate = 44100  # Update as needed
+        self.original_spectrogram_viewer = SpectrogramViewer(self.ui.original_spectro_graphics_view, self.sampling_rate)
+        self.equalized_spectrogram_viewer = SpectrogramViewer(self.ui.equalized_spectro_graphics_view, self.sampling_rate)
+        # self.equalized_spectrogram_viewer = SpectrogramViewer(parent=self.spectro_frame, sampling_rate=44100)
+        # self.ui.spectro_layout.addWidget(self.equalized_spectrogram_viewer)  # Ensure spectro_frame has a layout
+        # Connect button to toggle spectrogram visibility
+        self.ui.show_hide_btn.clicked.connect(self.toggle_spectrogram_visibility)
+
+
+    def toggle_spectrogram_visibility(self):
+        # Toggle the visibility of both spectrogram plots
+        if self.show_spectrograms:
+            self.ui.original_spectro_graphics_view.hide()
+            self.ui.equalized_spectro_graphics_view.hide()
+        else:
+            self.ui.original_spectro_graphics_view.show()
+            self.ui.equalized_spectro_graphics_view.show()
+
+        # Update the visibility state
+        self.show_spectrograms = not self.show_spectrograms
+
+
     def on_mode_change(self):
         if self.file_name:
             self.timer.stop()    
@@ -259,10 +282,10 @@ class Equilizer(QMainWindow):
                 self.data[: self.chunk_size], clear=True
             )
 
+
     def update_plot(self):
         mode = self.ui.mode_comboBox.currentText()
         if self.index + self.chunk_size <= len(self.data):
-            # Check if ECG mode is active
             if mode == "ECG Mode":
                 # Get the next chunk of the original ECG signal
                 chunk = self.ecg_signal[self.index : self.index + self.chunk_size]
