@@ -159,10 +159,14 @@ class Equilizer(QMainWindow):
         }
 
         self.ecg_ranges = {
-            "vf": (10, 50),
-            "mi": (0.5, 20),
-            # "sr": (5, 30),
-            "sr": (1, 15), #Premature Ventricular Contractions
+            "vf": (200, 300),
+            "mi": (7, 20),
+            "sr": (20, 40), #Premature Ventricular Contractions
+
+            # "vf": (10, 50),
+            # "mi": (0.5, 20),
+            # # "sr": (5, 30),
+            # "sr": (1, 15), #Premature Ventricular Contractions
 
         }
 
@@ -355,9 +359,9 @@ class Equilizer(QMainWindow):
     def update_ecg_slider(self):
 
         slider_values = {
-            "vf": self.ecg_sliders["vf"].value() / 100,  # normalized scale [0, 1]
-            "mi": self.ecg_sliders["mi"].value() / 100,    
-            "sr": self.ecg_sliders["sr"].value() / 100,    
+            "vf": self.ecg_sliders["vf"].value() / 130,  # normalized scale [0, 1]
+            "mi": self.ecg_sliders["mi"].value() / 130,    
+            "sr": self.ecg_sliders["sr"].value() / 130,    
         }
 
         equalized_signal_base = self.data.astype(np.float32)
