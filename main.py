@@ -131,16 +131,16 @@ class Equilizer(QMainWindow):
             10: (1950, 2050)
         }
         
-        self.ui.uniform_slider_1.setValue(10)
-        self.ui.uniform_slider_2.setValue(10)
-        self.ui.uniform_slider_3.setValue(10)
-        self.ui.uniform_slider_4.setValue(10)
-        self.ui.uniform_slider_5.setValue(10)
-        self.ui.uniform_slider_6.setValue(10)
-        self.ui.uniform_slider_7.setValue(10)
-        self.ui.uniform_slider_8.setValue(10)
-        self.ui.uniform_slider_9.setValue(10)
-        self.ui.uniform_slider_10.setValue(10)
+        self.ui.uniform_slider_1.setValue(100)
+        self.ui.uniform_slider_2.setValue(100)
+        self.ui.uniform_slider_3.setValue(100)
+        self.ui.uniform_slider_4.setValue(100)
+        self.ui.uniform_slider_5.setValue(100)
+        self.ui.uniform_slider_6.setValue(100)
+        self.ui.uniform_slider_7.setValue(100)
+        self.ui.uniform_slider_8.setValue(100)
+        self.ui.uniform_slider_9.setValue(100)
+        self.ui.uniform_slider_10.setValue(100)
         
         self.ui.uniform_slider_1.valueChanged.connect(self.update_uniform_slider)
         self.ui.uniform_slider_2.valueChanged.connect(self.update_uniform_slider)
@@ -379,7 +379,7 @@ class Equilizer(QMainWindow):
         self.equalized_signal = np.zeros_like(self.data, dtype=np.float32)
         # Sum up the filtered signals with their respective slider values
         for slider_number, slider in self.uniform_sliders.items():
-            slider_value = slider.value() / 10
+            slider_value = slider.value() / 100
             self.equalized_signal += slider_value * self.filtered_data[slider_number]
         self.state = True
         self.plot_frequency_graph()
@@ -409,7 +409,7 @@ class Equilizer(QMainWindow):
         if mode == "Uniform Mode":
             self.ui.frequency_graphics_view.setLimits(xMin = 1050, xMax = 2100)
             for slider_number, slider in self.uniform_sliders.items():
-                slider_value = slider.value() / 10
+                slider_value = slider.value() / 100
                 # slider range (low, high)
                 low, high = self.uniform_ranges[slider_number]
                 # find the indices in self.positive_freqs that correspond to this range
