@@ -142,11 +142,26 @@ class Equilizer(QMainWindow):
         self.ui.uniform_slider_9.valueChanged.connect(self.update_uniform_slider)
         self.ui.uniform_slider_10.valueChanged.connect(self.update_uniform_slider)
 
-        #    self.ecg_sliders = {
-        #     self.ui.p_wave_arrhythmia_slider: (5, 10),
-        #     self.ui.sv_arrhythmia_slider: (6, 22),
-        #     self.ui.nr_arrhythmia_slider: (0, 10)
+        # self.ecg_sliders = {
+        #     1: self.ui.vf_arrhythmia_slider,
+        #     2: self.ui.mi_arrhythmia_slider,
+        #     3: self.ui.sr_arrhythmia_slider,
         # }
+
+        # self.uniform_ranges ={
+        #     1: (50, 100),
+        #     2: (0, 4),
+        #     3: (0, 8),
+        #    }
+
+        # self.ui.vf_arrhythmia_slider.setValue(0)
+        # self.ui.mi_arrhythmia_slider.setValue(0)
+        # self.ui.sr_arrhythmia_slider.setValue(0)
+
+        # self.ui.vf_arrhythmia_slider.valueChanged.connect(self.update_ecg_slider)
+        # self.ui.mi_arrhythmia_slider.valueChanged.connect(self.update_ecg_slider)
+        # self.ui.sr_arrhythmia_slider.valueChanged.connect(self.update_ecg_slider)
+
         self.slices_sliders = {
             self.ui.wolf_slider: "wolf",
             self.ui.horse_slider: "horse",
@@ -160,11 +175,7 @@ class Equilizer(QMainWindow):
             self.ui.guitar_slider: "Guitar",
             self.ui.Violin_slider: "Violin",
         }
-        # self.ecg_arrs_max_f_dict = {
-        #     0.96: self.ui.vf_arrhythmia_slider,
-        #     0.96459: self.ui.mi_arrhythmia_slider,
-        #     0.38376: self.ui.sr_arrhythmia_slider
-        # }
+       
         self.ui.mode_comboBox.currentTextChanged.connect(self.change_sliders_for_modes)
 
     def set_home_view(self):

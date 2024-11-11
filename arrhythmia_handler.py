@@ -31,7 +31,6 @@ import numpy as np
 def apply_slider_changes(ecg_signal, slider_values):
     """
     Modifies the ECG signal based on the slider values for different arrhythmias.
-    Adds noise or scaled distortions to simulate arrhythmia changes without obvious sine/cosine shapes.
     """
     # Convert ecg_signal to float64 for precise manipulation
     modified_signal = np.array(ecg_signal, dtype=np.float64, copy=True)
@@ -44,6 +43,7 @@ def apply_slider_changes(ecg_signal, slider_values):
         # Create a custom, non-periodic pattern for modification
         linear_inversion_pattern = np.linspace(1, -1, len(ecg_signal)) * slider_values['myocardial_infarction']
         modified_signal *= (1 + linear_inversion_pattern)
+        
     # if slider_values['myocardial_infarction'] > 0:
     #     # Using a hyperbolic tangent modulation pattern for a smooth, wave-like effect
     #     modulation_pattern = 1 + slider_values['myocardial_infarction'] * np.tanh(np.linspace(-2, 2, len(ecg_signal)))
