@@ -159,14 +159,10 @@ class Equilizer(QMainWindow):
         }
 
         self.ecg_ranges = {
-            "vf": (200, 300),
-            "mi": (7, 20),
-            "sr": (20, 40), #Premature Ventricular Contractions
 
-            # "vf": (10, 50),
-            # "mi": (0.5, 20),
-            # # "sr": (5, 30),
-            # "sr": (1, 15), #Premature Ventricular Contractions
+            "vf": (7, 50),   #venticular fibrillation
+            "mi": (0.5, 20), #Premature Ventricular Contractions
+            "sr": (1, 15),   #brugada syndrome
 
         }
 
@@ -407,7 +403,11 @@ class Equilizer(QMainWindow):
 
     
     def calculate_initial_fft(self):
-        sampling_rate = 44100
+        mode = self.ui.mode_comboBox.currentText()
+        if mode == "ECG Mode":
+            sampling_rate = 500
+        else:
+            sampling_rate = 44100    
         dt = 1 / sampling_rate
 
         # perform FFT, get frequencies and magnitudes
@@ -416,53 +416,48 @@ class Equilizer(QMainWindow):
         fft_magnitude = np.abs(fft_result)
 
         # take the positive half of frequencies and magnitudes
-        self.positive_freqs = frequencies[: len(frequencies) // 2]
+        self.positive_freqs = frequencies[: len(frequencies) // 2 ]
         self.original_magnitude = fft_magnitude[: len(fft_result) // 2]
         # normalize the magnitude
         self.original_magnitude = self.original_magnitude / np.max(self.original_magnitude)
 
     
     def plot_frequency_graph(self):
-        # Start with the original magnitude values and adjust based on slider values
         positive_magnitude = self.original_magnitude.copy()
         
         mode = self.ui.mode_comboBox.currentText()
         if mode == "Uniform Mode":
             self.ui.frequency_graphics_view.setLimits(xMin = 1050, xMax = 2100)
-            for slider_number, slider in self.uniform_sliders.items():
-                slider_value = slider.value() / 100
-                # slider range (low, high)
-                low, high = self.uniform_ranges[slider_number]
-                # find the indices in self.positive_freqs that correspond to this range
-                indices_in_range = np.where((self.positive_freqs >= low) & (self.positive_freqs < high))[0]
-                # update the magnitude for frequencies within this range
-                positive_magnitude[indices_in_range] *= slider_value
-        
+            mode_sliders = self.uniform_sliders
+            mode_ranges = self.uniform_ranges
+            
         elif mode == "Musical Mode":
-            self.ui.frequency_graphics_view.setLimits(xMin = 80, xMax = 8000) 
-            for inst, _ in self.instruments.items():
-                instrument_slider_value = self.sliders[inst].value() / 100
-                # slider range (low, high)
-                low, high = self.instruments[inst]
-                # find the indices in self.positive_freqs that correspond to this range
-                indices_in_range = np.where((self.positive_freqs >= low) & (self.positive_freqs < high))[0]
-                # update the magnitude for frequencies within this range
-                positive_magnitude[indices_in_range] *= instrument_slider_value    
+            self.ui.frequency_graphics_view.setLimits(xMin = 80, xMax = 7999) 
+            mode_sliders = self.sliders
+            mode_ranges = self.instruments
         
         elif mode == "ECG Mode":
-            self.ui.frequency_graphics_view.setLimits(xMin = 0, xMax = 5000)    
-            slider_values = {
-            "atrial_fibrillation": self.ui.vf_arrhythmia_slider.value() / 100,
-            "myocardial_infarction": self.ui.mi_arrhythmia_slider.value() / 100,
-            "sinus_rhythm": self.ui.sr_arrhythmia_slider.value() / 100,
-            }
-            low, high = (0, 5000)
-            # find the indices in self.positive_freqs that correspond to this range
-            indices_in_range = np.where((self.positive_freqs >= low) & (self.positive_freqs < high))[0] 
-            for slider in slider_values:
-                positive_magnitude[indices_in_range] *= slider_values[slider]   
-                   
+            self.ui.frequency_graphics_view.setLimits(xMin = 0, xMax = 50) 
+            mode_sliders = self.ecg_sliders
+            mode_ranges = self.ecg_ranges  
 
+
+        for slider_number, slider in mode_sliders.items():
+            slider_value = slider.value() / 100
+            # slider range (low, high)
+            low, high = mode_ranges[slider_number]
+            if mode == "Musical Mode":
+                low /= 2
+                high /= 2
+            # find the indices in self.positive_freqs that correspond to this range
+            indices_in_range = np.where((self.positive_freqs >= low) & (self.positive_freqs < high))[0]
+            print("slider_number: ", slider_number)
+            print("low, high: ", low, high)
+            print ("indices_in_range: ", indices_in_range)
+            # update the magnitude for frequencies within this range
+            positive_magnitude[indices_in_range] *= slider_value
+        
+        # print(self.positive_freqs)
         # Ensure arrays are 1D
         frequencies_array = np.ravel(np.array(self.positive_freqs))
         magnitude_array = np.ravel(np.array(positive_magnitude))
@@ -474,8 +469,7 @@ class Equilizer(QMainWindow):
 
         # frequency graph limits
         self.ui.frequency_graphics_view.setLimits(yMin = np.min(magnitude_array), yMax = np.max(magnitude_array) + 1)
-        
-        
+                
         # clear the previous graph and plot updated graph
         self.ui.frequency_graphics_view.clear()
         self.ui.frequency_graphics_view.plot(frequencies_array, magnitude_array)
