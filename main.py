@@ -40,6 +40,10 @@ class Equilizer(QMainWindow):
         self.ecg_mode_selected = False
         self.ecg_signal = None  # To hold the ECG signal data
         self.equalized_signal = None  # To store modified signal
+        
+        # modes Combobox
+        self.ui.mode_comboBox.currentTextChanged.connect(self.on_mode_change)
+        self.file_name = None
 
         # Connect the ECG sliders
         self.ui.vf_arrhythmia_slider.valueChanged.connect(self.on_slider_change)
@@ -85,6 +89,12 @@ class Equilizer(QMainWindow):
             "Drums": self.ui.drums_slider,
             "Violin": self.ui.Violin_slider,
         }
+        self.instruments = {
+            "Drums": (1200, 5000),
+            "Guitar": (80, 1200),
+            "Saxophone": (250, 1200),
+            "Violin": (200, 3500),
+        }
         # end
         self.sliders_frames = {
             "Uniform Mode": self.ui.uniform_sliders_frame,
@@ -118,7 +128,8 @@ class Equilizer(QMainWindow):
             7: (1650, 1750), 
             8: (1750, 1850),
             9: (1850, 1950),
-            10: (1950, 2050)}
+            10: (1950, 2050)
+        }
         
         self.ui.uniform_slider_1.setValue(10)
         self.ui.uniform_slider_2.setValue(10)
@@ -166,6 +177,16 @@ class Equilizer(QMainWindow):
         #     0.38376: self.ui.sr_arrhythmia_slider
         # }
         self.ui.mode_comboBox.currentTextChanged.connect(self.change_sliders_for_modes)
+     
+        
+    def on_mode_change(self):
+        if self.file_name:
+            self.timer.stop()    
+            self.plot_original_data()
+            self.index = 0
+            self.state = False
+            self.timer.start(50)    
+
 
     def set_home_view(self):
         if self.ecg_mode_selected:
@@ -191,19 +212,19 @@ class Equilizer(QMainWindow):
             self.ecg_mode_selected = False
 
     def open_file(self):
-        file_name, _ = QFileDialog.getOpenFileName(
+        self.file_name, _ = QFileDialog.getOpenFileName(
             self, "Open WAV", "", "WAV Files (*.wav);;All Files (*)"
         )
-        if file_name:
+        if self.file_name:
             self.from_file = True
-            self.plot_original_data(file_name)
+            self.plot_original_data()
             self.index = 0
             # self.play_audio=False
             self.timer.start(50)
-            print(file_name)
+            print(self.file_name)
 
-    def plot_original_data(self, file_name):
-        self.fs, self.data = wav.read(file_name)  # Read the WAV file
+    def plot_original_data(self):
+        self.fs, self.data = wav.read(self.file_name)  # Read the WAV file
         self.equalized_signal = self.data
         self.calculate_initial_fft()
         self.plot_frequency_graph()
@@ -220,12 +241,7 @@ class Equilizer(QMainWindow):
             self.stream = self.audio_stream.open(
                 format=pyaudio.paInt16, channels=1, rate=self.fs, output=True
             )
-            self.instruments = {
-                "Drums": (1200, 5000),
-                "Guitar": (80, 1200),
-                "Saxophone": (250, 1200),
-                "Violin": (200, 3500),
-            }
+            
             self.filtered_data = {}
             if mode == "Musical Mode":
                 for instrument, (low, high) in self.instruments.items():
@@ -283,7 +299,7 @@ class Equilizer(QMainWindow):
         else:
             # Stop the timer and audio stream when the end of the file is reached
             self.timer.stop()
-            if mode == "Musical Mode":
+            if mode == "Musical Mode" or mode == "Uniform Mode":
                 self.stream.stop_stream()
                 self.stream.close()
                 self.audio_stream.terminate()
@@ -401,14 +417,42 @@ class Equilizer(QMainWindow):
         # Start with the original magnitude values and adjust based on slider values
         positive_magnitude = self.original_magnitude.copy()
         
-        for slider_number, slider in self.uniform_sliders.items():
-            slider_value = slider.value() / 10
-            # slider range (low, high)
-            low, high = self.uniform_ranges[slider_number]
+        mode = self.ui.mode_comboBox.currentText()
+        if mode == "Uniform Mode":
+            self.ui.frequency_graphics_view.setLimits(xMin = 1050, xMax = 2100)
+            for slider_number, slider in self.uniform_sliders.items():
+                slider_value = slider.value() / 10
+                # slider range (low, high)
+                low, high = self.uniform_ranges[slider_number]
+                # find the indices in self.positive_freqs that correspond to this range
+                indices_in_range = np.where((self.positive_freqs >= low) & (self.positive_freqs < high))[0]
+                # update the magnitude for frequencies within this range
+                positive_magnitude[indices_in_range] *= slider_value
+        
+        elif mode == "Musical Mode":
+            self.ui.frequency_graphics_view.setLimits(xMin = 80, xMax = 5000) 
+            for inst, _ in self.instruments.items():
+                instrument_slider_value = self.sliders[inst].value() / 100
+                # slider range (low, high)
+                low, high = self.instruments[inst]
+                # find the indices in self.positive_freqs that correspond to this range
+                indices_in_range = np.where((self.positive_freqs >= low) & (self.positive_freqs < high))[0]
+                # update the magnitude for frequencies within this range
+                positive_magnitude[indices_in_range] *= instrument_slider_value    
+        
+        elif mode == "ECG Mode":
+            self.ui.frequency_graphics_view.setLimits(xMin = 0, xMax = 5000)    
+            slider_values = {
+            "atrial_fibrillation": self.ui.vf_arrhythmia_slider.value() / 100,
+            "myocardial_infarction": self.ui.mi_arrhythmia_slider.value() / 100,
+            "sinus_rhythm": self.ui.sr_arrhythmia_slider.value() / 100,
+            }
+            low, high = (0, 5000)
             # find the indices in self.positive_freqs that correspond to this range
-            indices_in_range = np.where((self.positive_freqs >= low) & (self.positive_freqs < high))[0]
-            # update the magnitude for frequencies within this range
-            positive_magnitude[indices_in_range] *= slider_value
+            indices_in_range = np.where((self.positive_freqs >= low) & (self.positive_freqs < high))[0] 
+            for slider in slider_values:
+                positive_magnitude[indices_in_range] *= slider_values[slider]   
+                   
 
         # Ensure arrays are 1D
         frequencies_array = np.ravel(np.array(self.positive_freqs))
@@ -421,11 +465,7 @@ class Equilizer(QMainWindow):
 
         # frequency graph limits
         self.ui.frequency_graphics_view.setLimits(yMin = np.min(magnitude_array), yMax = np.max(magnitude_array) + 1)
-        mode = self.ui.mode_comboBox.currentText()
-        if mode == "Uniform Mode":
-            self.ui.frequency_graphics_view.setLimits(xMin = 1050, xMax = 2100)
-        elif mode == "Musical Mode":
-            self.ui.frequency_graphics_view.setLimits(xMin = 80, xMax = 5000)
+        
         
         # clear the previous graph and plot updated graph
         self.ui.frequency_graphics_view.clear()
