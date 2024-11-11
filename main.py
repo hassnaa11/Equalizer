@@ -57,10 +57,10 @@ class Equilizer(QMainWindow):
         self.data = None  # Holds the audio data
         self.index = 0
         self.chunk_size = 3000
-        self.ui.Violin_slider.setRange(1, 300)
-        self.ui.guitar_slider.setRange(1, 300)
-        self.ui.drums_slider.setRange(1, 300)
-        self.ui.Saxophone_slider.setRange(1, 300)
+        self.ui.Violin_slider.setRange(1, 100)
+        self.ui.guitar_slider.setRange(1, 100)
+        self.ui.drums_slider.setRange(1, 100)
+        self.ui.Saxophone_slider.setRange(1, 100)
         self.ui.guitar_slider.valueChanged.connect(
             lambda: self.update_instrument("Guitar")
         )
@@ -87,10 +87,11 @@ class Equilizer(QMainWindow):
             "Violin": self.ui.Violin_slider,
         }
         self.instruments = {
-            "Drums": (1200, 5000),
-            "Guitar": (80, 1200),
-            "Saxophone": (250, 1200),
-            "Violin": (200, 3500),
+            "Guitar": (80, 1500),
+            "Violin": (1500, 3000),
+            "Drums": (3000, 5000),
+            "Saxophone": (5000,8000),
+            
         }
         # end
         self.sliders_frames = {
@@ -324,6 +325,16 @@ class Equilizer(QMainWindow):
     def update_instrument(self, instrument):
         slider_value = self.sliders[instrument].value() / 100
         self.equalized_signal = np.zeros_like(self.data, dtype=np.float32)
+        if instrument=="Guitar":
+            print("Guitar")
+        elif instrument=="Violin":
+             print("Violin")
+        elif instrument=="Drums":
+              print("Drums")
+        elif instrument=="Saxophone":
+             print("Saxophone")
+
+            
         # Sum up the filtered signals with their respective slider values
         for inst, _ in self.instruments.items():
             print(self.sliders[inst].value())
@@ -424,7 +435,7 @@ class Equilizer(QMainWindow):
                 positive_magnitude[indices_in_range] *= slider_value
         
         elif mode == "Musical Mode":
-            self.ui.frequency_graphics_view.setLimits(xMin = 80, xMax = 5000) 
+            self.ui.frequency_graphics_view.setLimits(xMin = 80, xMax = 8000) 
             for inst, _ in self.instruments.items():
                 instrument_slider_value = self.sliders[inst].value() / 100
                 # slider range (low, high)
