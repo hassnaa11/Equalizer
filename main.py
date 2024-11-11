@@ -168,7 +168,6 @@ class Equilizer(QMainWindow):
         self.ui.mi_arrhythmia_slider.setValue(0)
         self.ui.sr_arrhythmia_slider.setValue(0)
 
-        # Connect slider changes to a single update method (like Uniform Mode)
         for slider in self.ecg_sliders.values():
             slider.valueChanged.connect(self.update_ecg_slider)
 
@@ -253,10 +252,9 @@ class Equilizer(QMainWindow):
         if len(self.data.shape) > 1:
             self.data = self.data[:, 0]
         self.ui.original_graphics_view.plot(self.data[: self.chunk_size], clear=True)
-        
-
+    
         if mode == "ECG Mode":
-            print("Displaying ECG data in static mode")
+            # print("Displaying ECG data in static mode")
             self.ui.original_graphics_view.plot(self.data, clear=True)
             self.filtered_data = {}
             for band_number, (low, high) in self.ecg_ranges.items():
@@ -264,7 +262,7 @@ class Equilizer(QMainWindow):
                     self.data, low, high, self.fs
                 )
             self.ui.equalized_graphics_view.plot(self.data, clear=True)  
-        # mode = self.ui.mode_comboBox.currentText()
+
         if mode == "Musical Mode" or mode == "Uniform Mode":
             self.audio_stream = pyaudio.PyAudio()
             self.stream = self.audio_stream.open(
@@ -334,7 +332,6 @@ class Equilizer(QMainWindow):
         elif instrument=="Saxophone":
              print("Saxophone")
 
-            
         # Sum up the filtered signals with their respective slider values
         for inst, _ in self.instruments.items():
             print(self.sliders[inst].value())
