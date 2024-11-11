@@ -9,6 +9,7 @@ from pathlib import Path
 import numpy as np
 import scipy.io.wavfile as wav
 import pyaudio
+import scipy.signal
 
 
 def bandpass_filter(data, lowcut, highcut, fs, order=5):
@@ -160,7 +161,9 @@ class Equilizer(QMainWindow):
         self.ecg_ranges = {
             "vf": (10, 50),
             "mi": (0.5, 20),
-            "sr": (0.1, 8),
+            # "sr": (5, 30),
+            "sr": (1, 15), #Premature Ventricular Contractions
+
         }
 
         # Set initial values
