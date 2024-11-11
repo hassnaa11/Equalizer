@@ -9,7 +9,7 @@ from pathlib import Path
 import numpy as np
 import scipy.io.wavfile as wav
 import pyaudio
-from arrhythmia_handler import detect_arrhythmias, apply_slider_changes
+import scipy.signal
 
 
 def bandpass_filter(data, lowcut, highcut, fs, order=5):
@@ -27,6 +27,9 @@ def bandpass_filter(data, lowcut, highcut, fs, order=5):
     nyquist = 0.5 * fs
     low = lowcut / nyquist
     high = highcut / nyquist
+    if not (0 < low < 1) or not (0 < high < 1):
+        print(f"Invalid frequency range: low={low}, high={high}, nyquist={nyquist}")
+        return data 
     b, a = butter(order, [low, high], btype="band")
     y = lfilter(b, a, data)
     return y
@@ -45,11 +48,6 @@ class Equilizer(QMainWindow):
         self.ui.mode_comboBox.currentTextChanged.connect(self.on_mode_change)
         self.file_name = None
 
-        # Connect the ECG sliders
-        self.ui.vf_arrhythmia_slider.valueChanged.connect(self.on_slider_change)
-        self.ui.mi_arrhythmia_slider.valueChanged.connect(self.on_slider_change)
-        self.ui.sr_arrhythmia_slider.valueChanged.connect(self.on_slider_change)
-
         # musical mode
         self.timer = QTimer(self)
         self.state = False
@@ -60,14 +58,10 @@ class Equilizer(QMainWindow):
         self.data = None  # Holds the audio data
         self.index = 0
         self.chunk_size = 3000
-        self.ui.Violin_slider.setRange(1, 300)
-        self.ui.guitar_slider.setRange(1, 300)
-        self.ui.drums_slider.setRange(1, 300)
-        self.ui.Saxophone_slider.setRange(1, 300)
-        self.ui.guitar_slider.setValue(300)
-        self.ui.Saxophone_slider.setValue(300)
-        self.ui.drums_slider.setValue(300)
-        self.ui.Violin_slider.setValue(300)
+        self.ui.Violin_slider.setRange(1, 100)
+        self.ui.guitar_slider.setRange(1, 100)
+        self.ui.drums_slider.setRange(1, 100)
+        self.ui.Saxophone_slider.setRange(1, 100)
         self.ui.guitar_slider.valueChanged.connect(
             lambda: self.update_instrument("Guitar")
         )
@@ -94,10 +88,11 @@ class Equilizer(QMainWindow):
             "Violin": self.ui.Violin_slider,
         }
         self.instruments = {
-            "Drums": (1200, 5000),
-            "Guitar": (80, 1200),
-            "Saxophone": (250, 1200),
-            "Violin": (200, 3500)
+            "Guitar": (80, 1500),
+            "Violin": (1500, 3000),
+            "Drums": (3000, 5000),
+            "Saxophone": (5000,8000),
+            
         }
         # end
         self.sliders_frames = {
@@ -157,11 +152,28 @@ class Equilizer(QMainWindow):
         self.ui.uniform_slider_9.valueChanged.connect(self.update_uniform_slider)
         self.ui.uniform_slider_10.valueChanged.connect(self.update_uniform_slider)
 
-        #    self.ecg_sliders = {
-        #     self.ui.p_wave_arrhythmia_slider: (5, 10),
-        #     self.ui.sv_arrhythmia_slider: (6, 22),
-        #     self.ui.nr_arrhythmia_slider: (0, 10)
-        # }
+        self.ecg_sliders = {
+            "vf": self.ui.vf_arrhythmia_slider,
+            "mi": self.ui.mi_arrhythmia_slider,
+            "sr": self.ui.sr_arrhythmia_slider,
+        }
+
+        self.ecg_ranges = {
+            "vf": (10, 50),
+            "mi": (0.5, 20),
+            # "sr": (5, 30),
+            "sr": (1, 15), #Premature Ventricular Contractions
+
+        }
+
+        # Set initial values
+        self.ui.vf_arrhythmia_slider.setValue(0)
+        self.ui.mi_arrhythmia_slider.setValue(0)
+        self.ui.sr_arrhythmia_slider.setValue(0)
+
+        for slider in self.ecg_sliders.values():
+            slider.valueChanged.connect(self.update_ecg_slider)
+
         self.slices_sliders = {
             self.ui.wolf_slider: "wolf",
             self.ui.horse_slider: "horse",
@@ -175,11 +187,7 @@ class Equilizer(QMainWindow):
             self.ui.guitar_slider: "Guitar",
             self.ui.Violin_slider: "Violin",
         }
-        # self.ecg_arrs_max_f_dict = {
-        #     0.96: self.ui.vf_arrhythmia_slider,
-        #     0.96459: self.ui.mi_arrhythmia_slider,
-        #     0.38376: self.ui.sr_arrhythmia_slider
-        # }
+       
         self.ui.mode_comboBox.currentTextChanged.connect(self.change_sliders_for_modes)
      
         
@@ -229,23 +237,40 @@ class Equilizer(QMainWindow):
 
     def plot_original_data(self):
         self.fs, self.data = wav.read(self.file_name)  # Read the WAV file
+        print(f"Sample rate of the file: {self.fs}")
+
+        mode = self.ui.mode_comboBox.currentText()
+        if mode == "ECG Mode" and self.fs != 500:
+            print("Resampling ECG signal to 500 Hz")
+            target_fs = 500
+            num_samples = int(len(self.data) * target_fs / self.fs)
+            self.data = scipy.signal.resample(self.data, num_samples)
+            self.fs = target_fs
+            print(f"Resampled to: {self.fs} Hz")
+
+
         self.equalized_signal = self.data
         self.calculate_initial_fft()
         self.plot_frequency_graph()
         if len(self.data.shape) > 1:
             self.data = self.data[:, 0]
         self.ui.original_graphics_view.plot(self.data[: self.chunk_size], clear=True)
-        mode = self.ui.mode_comboBox.currentText()
+    
         if mode == "ECG Mode":
-            # Handle ECG signal processing
-            self.ecg_signal = self.data
-            self.detect_and_update_ecg()
-        elif mode == "Musical Mode" or mode == "Uniform Mode":
+            # print("Displaying ECG data in static mode")
+            self.ui.original_graphics_view.plot(self.data, clear=True)
+            self.filtered_data = {}
+            for band_number, (low, high) in self.ecg_ranges.items():
+                self.filtered_data[band_number] = bandpass_filter(
+                    self.data, low, high, self.fs
+                )
+            self.ui.equalized_graphics_view.plot(self.data, clear=True)  
+
+        if mode == "Musical Mode" or mode == "Uniform Mode":
             self.audio_stream = pyaudio.PyAudio()
             self.stream = self.audio_stream.open(
                 format=pyaudio.paInt16, channels=1, rate=self.fs, output=True
             )
-            
             self.filtered_data = {}
             if mode == "Musical Mode":
                 for instrument, (low, high) in self.instruments.items():
@@ -253,36 +278,25 @@ class Equilizer(QMainWindow):
                         self.data, low, high, self.fs
                     )
                     print(self.filtered_data)
-            else:
+
+            elif mode == "Uniform Mode":
                 for slider_number, (low, high) in self.uniform_ranges.items():
                     self.filtered_data[slider_number] = bandpass_filter(
                         self.data, low, high, self.fs
                     )
                     print(self.filtered_data)
+
             self.ui.equalized_graphics_view.plot(
                 self.data[: self.chunk_size], clear=True
             )
 
     def update_plot(self):
         mode = self.ui.mode_comboBox.currentText()
-        if self.index + self.chunk_size <= len(self.data):
-            # Check if ECG mode is active
-            if mode == "ECG Mode":
-                # Get the next chunk of the original ECG signal
-                chunk = self.ecg_signal[self.index : self.index + self.chunk_size]
-                # Plot the original ECG signal
-                self.ui.original_graphics_view.plot(chunk, clear=True)
-                if self.state == False:
-                    # Plot the unmodified (original) ECG signal
-                    self.ui.equalized_graphics_view.plot(chunk, clear=True)
-                else:
-                    # Apply modifications and plot the equalized ECG signal
-                    chunk_equalized = self.equalized_signal[
-                        self.index : self.index + self.chunk_size
-                    ]
-                    self.ui.equalized_graphics_view.plot(chunk_equalized, clear=True)
+        if mode == "ECG Mode":
+            return
 
-            elif mode == "Musical Mode" or mode == "Uniform Mode":
+        if self.index + self.chunk_size <= len(self.data):
+            if mode == "Musical Mode" or mode == "Uniform Mode":
                 # Get the next chunk of the original data
                 chunk = self.data[self.index : self.index + self.chunk_size]
                 # Plot the original signal
@@ -312,6 +326,15 @@ class Equilizer(QMainWindow):
     def update_instrument(self, instrument):
         slider_value = self.sliders[instrument].value() / 100
         self.equalized_signal = np.zeros_like(self.data, dtype=np.float32)
+        if instrument=="Guitar":
+            print("Guitar")
+        elif instrument=="Violin":
+             print("Violin")
+        elif instrument=="Drums":
+              print("Drums")
+        elif instrument=="Saxophone":
+             print("Saxophone")
+
         # Sum up the filtered signals with their respective slider values
         for inst, _ in self.instruments.items():
             print(self.sliders[inst].value())
@@ -329,50 +352,40 @@ class Equilizer(QMainWindow):
             self.play_audio = not self.play_audio
             self.play_equalized_audio = False
 
-    def detect_and_update_ecg(self):
-        if self.ecg_signal is None:
-            return
-        detection_results = detect_arrhythmias(self.ecg_signal)
+    def update_ecg_slider(self):
 
-        # Handling potential NaN values with np.nan_to_num
-        atrial_fibrillation = np.nan_to_num(detection_results['atrial_fibrillation'], nan=0.0)
-        myocardial_infarction = np.nan_to_num(detection_results['myocardial_infarction'], nan=0.0)
-        sinus_rhythm = np.nan_to_num(detection_results['sinus_rhythm'], nan=0.0)
-
-        # Setting slider values
-        self.ui.vf_arrhythmia_slider.setValue(int(atrial_fibrillation * 100))
-        self.ui.mi_arrhythmia_slider.setValue(int(myocardial_infarction * 100))
-        self.ui.sr_arrhythmia_slider.setValue(int(sinus_rhythm * 100))
-        
-        self.ui.original_graphics_view.plot(self.ecg_signal[:1000], clear=True) 
-        self.equalized_signal = apply_slider_changes(self.ecg_signal, {
-        'normal': 1.0,
-        'atrial_fibrillation': 1.0,
-        'myocardial_infarction': 1.0,
-        'sinus_rhythm': 1.0
-        })
-        self.ui.equalized_graphics_view.plot(self.equalized_signal[:1000], clear=True)
-        self.plot_frequency_graph()
-
-    def on_slider_change(self):
-        print("Slider value changed!")
-
-        if self.ecg_signal is None:
-            return
-
-        # Get current slider values and normalize to [0, 1] range
         slider_values = {
-            "atrial_fibrillation": self.ui.vf_arrhythmia_slider.value() / 100,
-            "myocardial_infarction": self.ui.mi_arrhythmia_slider.value() / 100,
-            "sinus_rhythm": self.ui.sr_arrhythmia_slider.value() / 100,
+            "vf": self.ecg_sliders["vf"].value() / 100,  # normalized scale [0, 1]
+            "mi": self.ecg_sliders["mi"].value() / 100,    
+            "sr": self.ecg_sliders["sr"].value() / 100,    
         }
-        print("Current slider values:", slider_values)
 
-        # Apply slider changes and update the equalized graph
-        self.equalized_signal = apply_slider_changes(self.ecg_signal, slider_values)
-        print("Equalized signal (first 10 samples):", self.equalized_signal[:10])
+        equalized_signal_base = self.data.astype(np.float32)
+        self.equalized_signal = equalized_signal_base.copy() 
+       
+        # Plot the updated equalized signal
+        for key, value in slider_values.items():
+            if key in self.filtered_data:
+                # Calculate the change factor for increasing or decreasing effect
+                change_effect = value * (self.filtered_data[key].astype(np.float32) - equalized_signal_base)
+                # Blend this change to the equalized signal
+                self.equalized_signal += change_effect
 
-        self.ui.equalized_graphics_view.plot(self.equalized_signal[:1000], clear=True)
+        # If all sliders are zero, reset the equalized graph to the original signal
+        if all(value == 0 for value in slider_values.values()):
+            self.equalized_signal = equalized_signal_base
+
+        # Get y-axis limits from the original graph
+        original_plot_item = self.ui.original_graphics_view.getPlotItem()
+        original_y_min, original_y_max = original_plot_item.viewRange()[1]
+
+        # Plot the updated equalized signal with the same y-axis limits as the original graph
+        equalized_plot_item = self.ui.equalized_graphics_view.getPlotItem()
+        self.ui.equalized_graphics_view.plot(self.equalized_signal[:2000], clear=True)
+
+        # Set the y-axis range for the equalized graph
+        equalized_plot_item.setYRange(original_y_min, original_y_max)
+
         self.plot_frequency_graph()
 
     def update_uniform_slider(self):
@@ -425,9 +438,9 @@ class Equilizer(QMainWindow):
                 positive_magnitude[indices_in_range] *= slider_value
         
         elif mode == "Musical Mode":
-            self.ui.frequency_graphics_view.setLimits(xMin = 80, xMax = 5000) 
+            self.ui.frequency_graphics_view.setLimits(xMin = 80, xMax = 8000) 
             for inst, _ in self.instruments.items():
-                instrument_slider_value = self.sliders[inst].value() / 300
+                instrument_slider_value = self.sliders[inst].value() / 100
                 # slider range (low, high)
                 low, high = self.instruments[inst]
                 print("inst: ", inst)
@@ -439,17 +452,20 @@ class Equilizer(QMainWindow):
                 positive_magnitude[indices_in_range] *= instrument_slider_value    
         
         elif mode == "ECG Mode":
-            # self.ui.frequency_graphics_view.setLimits(xMin = 0, xMax = 5000)    
+            # self.ui.frequency_graphics_view.setLimits(xMin = 0, xMax = 70)    
             slider_values = {
-            "atrial_fibrillation": self.ui.vf_arrhythmia_slider.value() / 100,
-            "myocardial_infarction": self.ui.mi_arrhythmia_slider.value() / 100,
-            "sinus_rhythm": self.ui.sr_arrhythmia_slider.value() / 100,
+            "vf": self.ecg_sliders["vf"].value() / 130,  # normalized scale [0, 1]
+            "mi": self.ecg_sliders["mi"].value() / 130,    
+            "sr": self.ecg_sliders["sr"].value() / 130,    
             }
             
             for slider in slider_values:
-                low, high = (0, 4000)
+                low, high = self.ecg_ranges[slider]
                 # find the indices in self.positive_freqs that correspond to this range
                 indices_in_range = np.where((self.positive_freqs >= low) & (self.positive_freqs < high))[0] 
+                print("slider: ", slider)
+                print("low, high: ", low, high)
+                print ("indices_in_range: ", indices_in_range)
                 positive_magnitude[indices_in_range] *= slider_values[slider]   
                    
 
@@ -464,8 +480,7 @@ class Equilizer(QMainWindow):
 
         # frequency graph limits
         self.ui.frequency_graphics_view.setLimits(yMin = np.min(magnitude_array), yMax = np.max(magnitude_array) + 1)
-        
-        
+                
         # clear the previous graph and plot updated graph
         self.ui.frequency_graphics_view.clear()
         self.ui.frequency_graphics_view.plot(frequencies_array, magnitude_array)
@@ -477,3 +492,6 @@ if __name__ == "__main__":
     ui = Equilizer()
     ui.showMaximized()
     app.exec_()
+
+
+
