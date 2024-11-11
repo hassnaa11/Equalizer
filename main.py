@@ -412,7 +412,7 @@ class Equilizer(QMainWindow):
         fft_magnitude = np.abs(fft_result)
 
         # take the positive half of frequencies and magnitudes
-        self.positive_freqs = frequencies[: len(frequencies) // 2]
+        self.positive_freqs = frequencies[: len(frequencies) // 2 ]
         self.original_magnitude = fft_magnitude[: len(fft_result) // 2]
         # normalize the magnitude
         self.original_magnitude = self.original_magnitude / np.max(self.original_magnitude)
@@ -438,11 +438,13 @@ class Equilizer(QMainWindow):
                 positive_magnitude[indices_in_range] *= slider_value
         
         elif mode == "Musical Mode":
-            self.ui.frequency_graphics_view.setLimits(xMin = 80, xMax = 8000) 
+            # self.ui.frequency_graphics_view.setLimits(xMin = 80, xMax = 7999) 
             for inst, _ in self.instruments.items():
                 instrument_slider_value = self.sliders[inst].value() / 100
                 # slider range (low, high)
                 low, high = self.instruments[inst]
+                low = low / 2
+                high = high / 2
                 print("inst: ", inst)
                 print("low, high: ", low, high)
                 # find the indices in self.positive_freqs that correspond to this range
@@ -460,15 +462,18 @@ class Equilizer(QMainWindow):
             }
             
             for slider in slider_values:
+                slider_value = slider_values[slider]
+                print(slider_value)
                 low, high = self.ecg_ranges[slider]
                 # find the indices in self.positive_freqs that correspond to this range
                 indices_in_range = np.where((self.positive_freqs >= low) & (self.positive_freqs < high))[0] 
                 print("slider: ", slider)
                 print("low, high: ", low, high)
                 print ("indices_in_range: ", indices_in_range)
-                positive_magnitude[indices_in_range] *= slider_values[slider]   
-                   
+                positive_magnitude[indices_in_range] *= slider_value
+                print("positive_magnitude[indices_in_range]: ", positive_magnitude[indices_in_range])
 
+        # print(self.positive_freqs)
         # Ensure arrays are 1D
         frequencies_array = np.ravel(np.array(self.positive_freqs))
         magnitude_array = np.ravel(np.array(positive_magnitude))
