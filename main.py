@@ -339,13 +339,8 @@ class Equilizer(QMainWindow):
         self.ui.vf_arrhythmia_slider.setValue(int(atrial_fibrillation * 100))
         self.ui.mi_arrhythmia_slider.setValue(int(myocardial_infarction * 100))
         self.ui.sr_arrhythmia_slider.setValue(int(sinus_rhythm * 100))
-
-        # Update sliders based on detection results
-        # self.ui.vf_arrhythmia_slider.setValue(int(detection_results['atrial_fibrillation'] * 100))
-        # self.ui.mi_arrhythmia_slider.setValue(int(detection_results['myocardial_infarction'] * 100))
-        # self.ui.sr_arrhythmia_slider.setValue(int(detection_results['sinus_rhythm'] * 100))
-        # Plot initial signals
-        self.ui.original_graphics_view.plot(self.ecg_signal[:1000], clear=True)  # Plot first 1000 samples
+        
+        self.ui.original_graphics_view.plot(self.ecg_signal[:1000], clear=True) 
         self.equalized_signal = apply_slider_changes(self.ecg_signal, {
         'normal': 1.0,
         'atrial_fibrillation': 1.0,
@@ -353,8 +348,7 @@ class Equilizer(QMainWindow):
         'sinus_rhythm': 1.0
         })
         self.ui.equalized_graphics_view.plot(self.equalized_signal[:1000], clear=True)
-        # modified_signal = apply_slider_changes(self.ecg_signal, detection_results)
-        # self.ui.equalized_graphics_view.plot(modified_signal[:1000], clear=True)
+        self.plot_frequency_graph()
 
     def on_slider_change(self):
         print("Slider value changed!")
@@ -375,12 +369,6 @@ class Equilizer(QMainWindow):
         print("Equalized signal (first 10 samples):", self.equalized_signal[:10])
 
         self.ui.equalized_graphics_view.plot(self.equalized_signal[:1000], clear=True)
-        # modified_signal = apply_slider_changes(self.ecg_signal, slider_values)
-        # self.ui.equalized_graphics_view.plot(modified_signal[:1000], clear=True)  # Update graph
-        # modified_signal = apply_slider_changes(self.ecg_signal, slider_values)
-        self.ui.equalized_graphics_view.plot(
-            modified_signal[:1000], clear=True
-        )  # Update graph
         self.plot_frequency_graph()
 
     def update_uniform_slider(self):
