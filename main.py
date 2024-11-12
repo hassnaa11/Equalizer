@@ -396,7 +396,8 @@ class Equilizer(QMainWindow):
                         self.data, low, high, self.fs
                     )
                     print(self.filtered_data)
-                
+                self.equalized_spectrogram_viewer.update_spectrogram(self.data[: self.chunk_size], mode == "Animal Mode")
+
 
             self.ui.equalized_graphics_view.plot(
                 self.data[: self.chunk_size], clear=True
