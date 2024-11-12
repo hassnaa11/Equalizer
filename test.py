@@ -1,65 +1,32 @@
-from PyQt5 import QtWidgets
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as Canvas
-import matplotlib.pyplot as plt
 import numpy as np
-import warnings
+import matplotlib.pyplot as plt
 
-class MplCanvas(Canvas):
-    def __init__(self):
-        # Configure Matplotlib to match dark theme
-        plt.rcParams['axes.facecolor'] = '#2b2b2b'  # Background color
-        plt.rc('axes', edgecolor='w')  # Axis color
-        plt.rc('xtick', color='w')  # X-tick color
-        plt.rc('ytick', color='w')  # Y-tick color
-        plt.rcParams['savefig.facecolor'] = '#2b2b2b'  # Background for saved figures
-        plt.rcParams["figure.autolayout"] = True
+# Example parameters
+sampling_rate = 44100  # Sampling rate in Hz
+duration = 1         # Duration in seconds
+frequencies = [1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900, 2000]  # Frequencies of the sine waves in Hz
+amplitude = 1.0
 
-        # Initialize the figure and axes for the spectrogram
-        self.figure = plt.figure()
-        self.figure.patch.set_facecolor('#2b2b2b')  # Set background color for the figure
-        self.axes = self.figure.add_subplot()
-        super().__init__(self.figure)
-        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        self.updateGeometry()
+# Generate a sample signal: sum of three sine waves
+t = np.linspace(0, duration, int(sampling_rate * duration), endpoint=False)
+signal = sum(amplitude * np.sin(2 * np.pi * f * t) for f in frequencies)
 
-    def plot_spectrogram(self, signal, fs):
-        """Plots the spectrogram of the signal with the specified sampling frequency."""
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=UserWarning)
-            warnings.filterwarnings("ignore", category=RuntimeWarning)
-            self.axes.cla()  # Clear any previous plot
-            
-            # Use 'viridis' colormap for greens and blues
-            Pxx, freqs, bins, im = self.axes.specgram(signal, Fs=fs, cmap='viridis', NFFT=1024, noverlap=512)
-            self.axes.set_ylim(0, fs / 2)  # Set y-axis limit to half the sampling rate
+# Perform FFT
+fft_result = np.fft.fft(signal)
+fft_magnitude = np.abs(fft_result) / len(signal)  # Normalize the magnitude
 
-            # Set axis labels with color for visibility on dark background
-            self.axes.set_xlabel("Time (s)", color='w', fontsize=10)
-            self.axes.set_ylabel("Frequency (Hz)", color='w', fontsize=10)
+# Calculate frequency bins
+freqs = np.fft.fftfreq(len(signal), 1 / sampling_rate)
 
-            # Adjust tick parameters for both axes
-            self.axes.tick_params(axis='x', colors='w', labelsize=8)
-            self.axes.tick_params(axis='y', colors='w', labelsize=8)
+# Only take the positive half of the spectrum for plotting
+positive_freqs = freqs[:len(freqs) // 2]
+positive_magnitude = fft_magnitude[:len(freqs) // 2]
 
-            # Force a redraw of the figure to apply changes
-            self.draw()
-
-class SpectrogramViewer(QtWidgets.QWidget):
-    def __init__(self, parent=None, sampling_rate=44100):
-        super().__init__(parent)
-        self.sampling_rate = sampling_rate
-
-        # Create and embed the MplCanvas within a widget layout
-        self.canvas = MplCanvas()
-        self.layout = QtWidgets.QVBoxLayout()
-        self.layout.addWidget(self.canvas)
-        self.setLayout(self.layout)
-
-    def update_spectrogram(self, signal):
-        """Update the spectrogram plot with the new signal."""
-        self.canvas.plot_spectrogram(signal, self.sampling_rate)
-
-    def clear_spectrogram(self):
-        """Clear the spectrogram plot."""
-        self.canvas.axes.cla()  # Clear the axes
-        self.canvas.draw()  # Redraw the canvas to reflect the cleared state " 
+# Plot the frequency domain (magnitude spectrum)
+plt.figure(figsize=(10, 6))
+plt.plot(positive_freqs, positive_magnitude)
+plt.title("Frequency Domain of the Signal")
+plt.xlabel("Frequency (Hz)")
+plt.ylabel("Magnitude")
+plt.grid()
+plt.show()
