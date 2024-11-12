@@ -324,7 +324,6 @@ class Equilizer(QMainWindow):
                 
 
     def update_instrument(self, instrument):
-        slider_value = self.sliders[instrument].value() / 100
         self.equalized_signal = np.zeros_like(self.data, dtype=np.float32)
         if instrument=="Guitar":
             print("Guitar")
@@ -353,12 +352,12 @@ class Equilizer(QMainWindow):
             self.play_equalized_audio = False
 
     def update_ecg_slider(self):
-
+        
         slider_values = {
             "vf": self.ecg_sliders["vf"].value() / 100,  # normalized scale [0, 1]
             "mi": self.ecg_sliders["mi"].value() / 100,    
             "sr": self.ecg_sliders["sr"].value() / 100,    
-        }
+        }     
 
         equalized_signal_base = self.data.astype(np.float32)
         self.equalized_signal = equalized_signal_base.copy() 
@@ -423,46 +422,47 @@ class Equilizer(QMainWindow):
 
     
     def plot_frequency_graph(self):
-        positive_magnitude = self.original_magnitude.copy()
+        self.magnitude = self.original_magnitude.copy()
+        self.positive_magnitude = np.zeros_like(self.magnitude)
         
         mode = self.ui.mode_comboBox.currentText()
         if mode == "Uniform Mode":
-            self.ui.frequency_graphics_view.setLimits(xMin = 1050, xMax = 2100)
+            self.ui.frequency_graphics_view.setLimits(xMin=1050, xMax=2100)
             mode_sliders = self.uniform_sliders
             mode_ranges = self.uniform_ranges
-            
+
         elif mode == "Musical Mode":
-            self.ui.frequency_graphics_view.setLimits(xMin = 80, xMax = 7999) 
+            self.ui.frequency_graphics_view.setLimits(xMin=80, xMax=7999)
             mode_sliders = self.sliders
             mode_ranges = self.instruments
-        
+
         elif mode == "ECG Mode":
-            self.ui.frequency_graphics_view.setLimits(xMin = 0, xMax = 50) 
+            self.ui.frequency_graphics_view.setLimits(xMin=0, xMax=50, yMin=0, yMax=1)
             mode_sliders = self.ecg_sliders
             mode_ranges = self.ecg_ranges  
 
-
         for slider_number, slider in mode_sliders.items():
             slider_value = slider.value() / 100
-            # slider range (low, high)
             low, high = mode_ranges[slider_number]
+
             if mode == "Musical Mode":
                 low /= 2
                 high /= 2
-            # find the indices in self.positive_freqs that correspond to this range
-            indices_in_range = np.where((self.positive_freqs >= low) & (self.positive_freqs < high))[0]
-            print("slider_number: ", slider_number)
-            print("low, high: ", low, high)
-            print ("indices_in_range: ", indices_in_range)
-            # update the magnitude for frequencies within this range
-            positive_magnitude[indices_in_range] *= slider_value
-        
-        # print(self.positive_freqs)
-        # Ensure arrays are 1D
-        frequencies_array = np.ravel(np.array(self.positive_freqs))
-        magnitude_array = np.ravel(np.array(positive_magnitude))
 
-        # Trim the arrays to be the same length
+            # find indices corresponding to this slider's range
+            indices_in_range = np.where((self.positive_freqs >= low) & (self.positive_freqs < high))[0]
+
+            # apply maximum of the current value and the slider adjusted magnitude
+            self.positive_magnitude[indices_in_range] = np.maximum(
+                self.positive_magnitude[indices_in_range],
+                self.magnitude[indices_in_range] * slider_value
+            )
+
+        # make them 1D array
+        frequencies_array = np.ravel(np.array(self.positive_freqs))
+        magnitude_array = np.ravel(np.array(self.positive_magnitude))
+
+        # trim the arrays to be the same length
         min_length = min(len(frequencies_array), len(magnitude_array))
         frequencies_array = frequencies_array[:min_length]
         magnitude_array = magnitude_array[:min_length]
