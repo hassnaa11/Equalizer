@@ -254,7 +254,6 @@ class Equilizer(QMainWindow):
             self.ecg_mode_selected = False
 
     def open_file(self):
-        self.original_spectrogram_viewer.clear_spectrogram()
         self.file_name, _ = QFileDialog.getOpenFileName(
             self, "Open WAV", "", "WAV Files (*.wav);;All Files (*)"
         )
@@ -286,19 +285,22 @@ class Equilizer(QMainWindow):
         if len(self.data.shape) > 1:
             self.data = self.data[:, 0]
         self.ui.original_graphics_view.plot(self.data[: self.chunk_size], clear=True)
-        self.original_spectrogram_viewer.update_spectrogram(self.data[: self.chunk_size])
+        if mode == "Uniform Mode":
+            self.original_spectrogram_viewer.update_spectrogram(self.data[: self.chunk_size], mode = "Uniform Mode")
+        elif mode == "Musical Mode":
+            self.original_spectrogram_viewer.update_spectrogram(self.data[: self.chunk_size], mode = "Musical Mode")
     
         if mode == "ECG Mode":
             # print("Displaying ECG data in static mode")
             self.ui.original_graphics_view.plot(self.data, clear=True)
-            self.original_spectrogram_viewer.update_spectrogram(self.data)
+            self.original_spectrogram_viewer.update_spectrogram(self.data, mode = "ECG Mode")
             self.filtered_data = {}
             for band_number, (low, high) in self.ecg_ranges.items():
                 self.filtered_data[band_number] = bandpass_filter(
                     self.data, low, high, self.fs
                 )
             self.ui.equalized_graphics_view.plot(self.data, clear=True)  
-            self.equalized_spectrogram_viewer.update_spectrogram(self.data)
+            self.equalized_spectrogram_viewer.update_spectrogram(self.data, mode = "ECG Mode")
 
 
         if mode == "Musical Mode" or mode == "Uniform Mode":
@@ -313,6 +315,7 @@ class Equilizer(QMainWindow):
                         self.data, low, high, self.fs
                     )
                     print(self.filtered_data)
+                self.equalized_spectrogram_viewer.update_spectrogram(self.data[: self.chunk_size], mode = "Musical Mode")
 
             elif mode == "Uniform Mode":
                 for slider_number, (low, high) in self.uniform_ranges.items():
@@ -320,11 +323,12 @@ class Equilizer(QMainWindow):
                         self.data, low, high, self.fs
                     )
                     print(self.filtered_data)
+                self.equalized_spectrogram_viewer.update_spectrogram(self.data[: self.chunk_size], mode == "Uniform Mode")
 
             self.ui.equalized_graphics_view.plot(
                 self.data[: self.chunk_size], clear=True
             )
-            self.equalized_spectrogram_viewer.update_spectrogram(self.data[: self.chunk_size])
+            # self.equalized_spectrogram_viewer.update_spectrogram(self.data[: self.chunk_size])
 
 
 
@@ -337,19 +341,32 @@ class Equilizer(QMainWindow):
             if mode == "Musical Mode" or mode == "Uniform Mode":
                 # Get the next chunk of the original data
                 chunk = self.data[self.index : self.index + self.chunk_size]
-                # Plot the original signal
-                # Update the spectrogram with the new chunk if available
-                self.original_spectrogram_viewer.update_spectrogram(chunk)
+
+                if mode == "Musical Mode":
+                    self.original_spectrogram_viewer.update_spectrogram(chunk, mode = "Musical Mode")
+                else:
+                    self.original_spectrogram_viewer.update_spectrogram(chunk, mode = "Unifrom Mode")
+
                 self.ui.original_graphics_view.plot(chunk, clear=True)
                 if self.state == False:
                     self.ui.equalized_graphics_view.plot(chunk, clear=True)
-                    self.equalized_spectrogram_viewer.update_spectrogram(chunk)
+
+                    if mode == "Musical Mode":
+                        self.equalized_spectrogram_viewer.update_spectrogram(chunk, mode = "Musical Mode")
+                    else:
+                        self.equalized_spectrogram_viewer.update_spectrogram(chunk, mode = "Uniform Mode")
+                    
                 else:
                     chunk_equalized = self.equalized_signal[
                         self.index : self.index + self.chunk_size
                     ]
                     self.ui.equalized_graphics_view.plot(chunk_equalized, clear=True)
-                    self.equalized_spectrogram_viewer.update_spectrogram(chunk)
+
+                    if mode == "Musical Mode":
+                        self.equalized_spectrogram_viewer.update_spectrogram(chunk_equalized, mode = "Musical Mode")
+                    else:
+                        self.equalized_spectrogram_viewer.update_spectrogram(chunk_equalized, mode = "Uniform Mode")
+
                     if self.play_equalized_audio:
                         self.stream.write(chunk_equalized.astype(np.int16).tobytes())
                 if self.play_audio:
@@ -424,7 +441,7 @@ class Equilizer(QMainWindow):
         # Plot the updated equalized signal with the same y-axis limits as the original graph
         equalized_plot_item = self.ui.equalized_graphics_view.getPlotItem()
         self.ui.equalized_graphics_view.plot(self.equalized_signal[:2000], clear=True)
-        self.equalized_spectrogram_viewer.update_spectrogram(self.equalized_signal[:2000])
+        self.equalized_spectrogram_viewer.update_spectrogram(self.equalized_signal[:2000], mode="ECG Mode")
 
         # Set the y-axis range for the equalized graph
         equalized_plot_item.setYRange(original_y_min, original_y_max)
