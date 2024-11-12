@@ -47,12 +47,13 @@ class Equilizer(QMainWindow):
         self.equalized_signal = None  # To store modified signal
         
         # modes Combobox
-        self.ui.mode_comboBox.currentTextChanged.connect(self.on_mode_change)
+        self.ui.mode_comboBox.currentTextChanged.connect(self.replay)
         self.file_name = None
 
         # button functions
         self.ui.play_pause_btn.clicked.connect(self.play_pause)
         self.ui.show_hide_btn.clicked.connect(self.toggle_spectrogram_visibility)
+        self.ui.replay_btn.clicked.connect(self.on_mode_change)
 
         # musical mode
         self.timer = QTimer(self)
@@ -273,6 +274,17 @@ class Equilizer(QMainWindow):
             self.is_timer_running = True  
             self.ui.play_pause_btn.setIcon(QIcon(f'icons/icons/pause copy.svg'))
 
+    def replay(self):
+        
+        self.ui.wolf_slider.setValue(1)
+        self.ui.horse_slider.setValue(1)
+        self.ui.cow_slider.setValue(1)
+        self.ui.dolphin_slider.setValue(1)
+        self.ui.elephant_slider.setValue(1)
+        self.ui.frog_slider.setValue(1)
+
+        self.on_mode_change()
+        
 
     def play_pause(self):
         if self.is_timer_running:
