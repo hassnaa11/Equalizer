@@ -96,7 +96,39 @@ class Equilizer(QMainWindow):
             "Saxophone": (5000,8000),
             
         }
-        # end
+        # end of music
+
+        # animal mode
+        self.animal_sliders = {
+            "wolf": self.ui.wolf_slider,
+            "horse": self.ui.horse_slider,
+            "cow": self.ui.cow_slider,
+            "dolphin": self.ui.dolphin_slider,
+            "elephant": self.ui.elephant_slider,
+            "frog": self.ui.frog_slider,
+        }
+        self.animal_ranges = {
+        "wolf": (500, 700),        
+        "horse": (100, 300),      
+        "cow": (20, 1250),         
+        "dolphin": (1000, 1500), 
+        "elephant": (20, 40),    
+        "frog": (300, 500),      
+}
+        self.ui.wolf_slider.setRange(500, 700)
+        self.ui.horse_slider.setRange(100, 300)
+        self.ui.cow_slider.setRange(80, 400)
+        self.ui.dolphin_slider.setRange(1000, 1500)
+        self.ui.elephant_slider.setRange(20, 40)
+        self.ui.frog_slider.setRange(300, 500)
+        self.ui.wolf_slider.valueChanged.connect(lambda: self.update_animal("wolf"))
+        self.ui.horse_slider.valueChanged.connect(lambda: self.update_animal("horse"))
+        self.ui.cow_slider.valueChanged.connect(lambda: self.update_animal("cow"))
+        self.ui.dolphin_slider.valueChanged.connect(lambda: self.update_animal("dolphin"))
+        self.ui.elephant_slider.valueChanged.connect(lambda: self.update_animal("elephant"))
+        self.ui.frog_slider.valueChanged.connect(lambda: self.update_animal("frog"))
+        # end of animal mode
+
         self.sliders_frames = {
             "Uniform Mode": self.ui.uniform_sliders_frame,
             "Animal Mode": self.ui.animals_sliders_frame,
@@ -301,7 +333,7 @@ class Equilizer(QMainWindow):
             self.equalized_spectrogram_viewer.update_spectrogram(self.data)
 
 
-        if mode == "Musical Mode" or mode == "Uniform Mode":
+        if mode == "Musical Mode" or mode == "Uniform Mode" or mode == "Animal Mode":
             self.audio_stream = pyaudio.PyAudio()
             self.stream = self.audio_stream.open(
                 format=pyaudio.paInt16, channels=1, rate=self.fs, output=True
@@ -320,6 +352,12 @@ class Equilizer(QMainWindow):
                         self.data, low, high, self.fs
                     )
                     print(self.filtered_data)
+            elif mode == "Animal Mode":
+                for animal, (low, high) in self.animal_ranges.items():
+                    self.filtered_data[animal] = bandpass_filter(
+                        self.data, low, high, self.fs
+                    )
+                    print(self.filtered_data)
 
             self.ui.equalized_graphics_view.plot(
                 self.data[: self.chunk_size], clear=True
@@ -334,7 +372,7 @@ class Equilizer(QMainWindow):
             return
 
         if self.index + self.chunk_size <= len(self.data):
-            if mode == "Musical Mode" or mode == "Uniform Mode":
+            if mode == "Musical Mode" or mode == "Uniform Mode" or mode == "Animal Mode":
                 # Get the next chunk of the original data
                 chunk = self.data[self.index : self.index + self.chunk_size]
                 # Plot the original signal
@@ -359,7 +397,7 @@ class Equilizer(QMainWindow):
         else:
             # Stop the timer and audio stream when the end of the file is reached
             self.timer.stop()
-            if mode == "Musical Mode" or mode == "Uniform Mode":
+            if mode == "Musical Mode" or mode == "Uniform Mode" or mode == "Animal Mode":
                 self.stream.stop_stream()
                 self.stream.close()
                 self.audio_stream.terminate()
@@ -382,6 +420,18 @@ class Equilizer(QMainWindow):
             print(self.sliders[inst].value())
             instrument_slider_value = self.sliders[inst].value() / 100
             self.equalized_signal += instrument_slider_value * self.filtered_data[inst]
+
+        self.state = True
+        self.plot_frequency_graph()
+
+    def update_animal(self, animal):
+        animal_slider_value = self.animal_sliders[animal].value() / 100
+        self.equalized_signal = np.zeros_like(self.data, dtype=np.float32)
+        
+        for Animal, _ in self.animal_ranges.items():
+            print(self.animal_sliders[Animal].value())
+            animal_slider_value = self.animal_sliders[Animal].value() / 100
+            self.equalized_signal += animal_slider_value * self.filtered_data[Animal]
 
         self.state = True
         self.plot_frequency_graph()
@@ -483,7 +533,10 @@ class Equilizer(QMainWindow):
             self.ui.frequency_graphics_view.setLimits(xMin = 0, xMax = 50) 
             mode_sliders = self.ecg_sliders
             mode_ranges = self.ecg_ranges  
-
+        elif mode == "Animal Mode":
+            self.ui.frequency_graphics_view.setLimits(xMin = 20, xMax = 1500) 
+            mode_sliders = self.animal_sliders
+            mode_ranges = self.animal_ranges
 
         for slider_number, slider in mode_sliders.items():
             slider_value = slider.value() / 100
