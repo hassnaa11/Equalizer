@@ -36,8 +36,10 @@ class MplCanvas(Canvas):
                 y_min, y_max = 80, 7999
             elif mode == "ECG Mode":
                 y_min, y_max = 0, 50
+            elif mode == "Animal Mode":
+                y_min, y_max = 20, 1500
             else:
-                y_min, y_max = 0, 1000  # Default range
+                y_min, y_max = 1050, 2100  # Default range
 
             # Use 'viridis' colormap for greens and blues
             Pxx, freqs, bins, im = self.axes.specgram(signal, Fs=fs, cmap='viridis', NFFT=1024, noverlap=512)

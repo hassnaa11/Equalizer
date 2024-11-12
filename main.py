@@ -54,6 +54,7 @@ class Equilizer(QMainWindow):
         self.timer = QTimer(self)
         self.state = False
         self.timer.timeout.connect(self.update_plot)
+        # self.timer.setInterval(50//6)
         self.audio_stream = None
         self.play_equalized_audio = False
         self.play_audio = False
@@ -237,7 +238,35 @@ class Equilizer(QMainWindow):
         # self.equalized_spectrogram_viewer = SpectrogramViewer(parent=self.spectro_frame, sampling_rate=44100)
         # self.ui.spectro_layout.addWidget(self.equalized_spectrogram_viewer)  # Ensure spectro_frame has a layout
         # Connect button to toggle spectrogram visibility
+        self.is_audiogram = False
         self.ui.show_hide_btn.clicked.connect(self.toggle_spectrogram_visibility)
+        self.ui.reset_view_btn.setText("Audiogram") 
+        self.ui.reset_view_btn.clicked.connect(self.toggle_scale)
+        self.ui.speed_slider.valueChanged.connect(self.adjust_playback_speed)
+
+    def adjust_playback_speed(self):
+        # Get the current speed multiplier from the slider
+        speed = self.ui.speed_slider.value()
+
+        # Adjust the timer interval based on speed (1x, 2x, or 3x)
+        base_interval = 50  # Original interval in ms (1x speed)
+        self.timer.setInterval(base_interval // speed)
+        print(f"Playback speed set to {speed}x, Timer interval: {self.timer.interval()} ms")
+
+
+    def toggle_scale(self):
+        """
+        Toggle between linear and audiogram scales.
+        """
+        if self.is_audiogram:
+            self.is_audiogram = False
+            self.ui.reset_view_btn.setText("Audiogram")  # Change to audiogram
+        else:
+            self.is_audiogram = True
+            self.ui.reset_view_btn.setText("Linear")  # Change to linear
+        
+        # Re-plot the graph with the new scale
+        self.plot_frequency_graph()
 
 
     def toggle_spectrogram_visibility(self):
@@ -304,7 +333,7 @@ class Equilizer(QMainWindow):
         mode = self.ui.mode_comboBox.currentText()
         if mode == "ECG Mode" and self.fs != 500:
             print("Resampling ECG signal to 500 Hz")
-            target_fs = 500
+            target_fs = 500                                           
             num_samples = int(len(self.data) * target_fs / self.fs)
             self.data = scipy.signal.resample(self.data, num_samples)
             self.fs = target_fs
@@ -321,6 +350,8 @@ class Equilizer(QMainWindow):
             self.original_spectrogram_viewer.update_spectrogram(self.data[: self.chunk_size], mode = "Uniform Mode")
         elif mode == "Musical Mode":
             self.original_spectrogram_viewer.update_spectrogram(self.data[: self.chunk_size], mode = "Musical Mode")
+        elif mode == "Animal Mode":
+            self.original_spectrogram_viewer.update_spectrogram(self.data[: self.chunk_size], mode = "Animal Mode")
     
         if mode == "ECG Mode":
             # print("Displaying ECG data in static mode")
@@ -362,12 +393,12 @@ class Equilizer(QMainWindow):
                         self.data, low, high, self.fs
                     )
                     print(self.filtered_data)
+                self.equalized_spectrogram_viewer.update_spectrogram(self.data[: self.chunk_size], mode == "Animal Mode")
                 
 
             self.ui.equalized_graphics_view.plot(
                 self.data[: self.chunk_size], clear=True
             )
-            # self.equalized_spectrogram_viewer.update_spectrogram(self.data[: self.chunk_size])
 
 
 
@@ -381,10 +412,10 @@ class Equilizer(QMainWindow):
                 # Get the next chunk of the original data
                 chunk = self.data[self.index : self.index + self.chunk_size]
 
-                if mode == "Musical Mode":
-                    self.original_spectrogram_viewer.update_spectrogram(chunk, mode = "Musical Mode")
-                else:
-                    self.original_spectrogram_viewer.update_spectrogram(chunk, mode = "Unifrom Mode")
+                # if mode == "Musical Mode":
+                #     self.original_spectrogram_viewer.update_spectrogram(chunk, mode = "Musical Mode")
+                # else:
+                #     self.original_spectrogram_viewer.update_spectrogram(chunk, mode = "Unifrom Mode")
 
                 self.ui.original_graphics_view.plot(chunk, clear=True)
                 if self.state == False:
@@ -392,6 +423,8 @@ class Equilizer(QMainWindow):
 
                     if mode == "Musical Mode":
                         self.equalized_spectrogram_viewer.update_spectrogram(chunk, mode = "Musical Mode")
+                    elif mode == "Animal Mode":
+                        self.equalized_spectrogram_viewer.update_spectrogram(chunk, mode = "Animal Mode")
                     else:
                         self.equalized_spectrogram_viewer.update_spectrogram(chunk, mode = "Uniform Mode")
                     
@@ -403,6 +436,8 @@ class Equilizer(QMainWindow):
 
                     if mode == "Musical Mode":
                         self.equalized_spectrogram_viewer.update_spectrogram(chunk_equalized, mode = "Musical Mode")
+                    elif mode == "Animal Mode":
+                        self.equalized_spectrogram_viewer.update_spectrogram(chunk_equalized, mode = "Animal Mode")
                     else:
                         self.equalized_spectrogram_viewer.update_spectrogram(chunk_equalized, mode = "Uniform Mode")
 
@@ -586,7 +621,24 @@ class Equilizer(QMainWindow):
                 
         # clear the previous graph and plot updated graph
         self.ui.frequency_graphics_view.clear()
-        self.ui.frequency_graphics_view.plot(frequencies_array, magnitude_array)
+        # self.ui.frequency_graphics_view.plot(frequencies_array, magnitude_array)
+        # Plot in linear scale by default
+        if not self.is_audiogram:
+            self.ui.frequency_graphics_view.plot(frequencies_array, magnitude_array)
+        else:
+            # Use the audiogram scale (logarithmic) if toggled
+            self.plot_audiogram_scale(frequencies_array, magnitude_array)
+
+
+    def plot_audiogram_scale(self, frequencies, magnitudes):
+        """
+        Plots frequencies on an audiogram scale (logarithmic) for better analysis.
+        """
+        # Apply logarithmic scale for frequencies
+        log_frequencies = np.log10(frequencies + 1)  # Adding 1 to avoid log(0)
+        
+        # Plot the audiogram-scaled graph
+        self.ui.frequency_graphics_view.plot(log_frequencies, magnitudes)
 
 
 
