@@ -231,29 +231,65 @@ class Equilizer(QMainWindow):
         self.ui.mode_comboBox.currentTextChanged.connect(self.change_sliders_for_modes)
         
         self.show_spectrograms = True
-        self.sampling_rate = 44100  # Update as needed
-        # Initialize Spectrogram Viewer with desired sampling rate
-        # self.spectrogram_viewer = SpectrogramViewer(sampling_rate=44100)
-        
-        # Assuming self.layout is the layout where you want to add the spectrogram
-        # self.ui.equalized_spectro_frame.addWidget(self.spectrogram_viewer)
-        
+        self.sampling_rate = 44100  
         self.original_spectrogram_viewer = SpectrogramViewer(self.ui.original_spectro_graphics_view, self.sampling_rate)
         self.equalized_spectrogram_viewer = SpectrogramViewer(self.ui.equalized_spectro_graphics_view, self.sampling_rate)
-        # self.equalized_spectrogram_viewer = SpectrogramViewer(parent=self.spectro_frame, sampling_rate=44100)
-        # self.ui.spectro_layout.addWidget(self.equalized_spectrogram_viewer)  # Ensure spectro_frame has a layout
-        # Connect button to toggle spectrogram visibility
         self.is_audiogram = False
         self.ui.show_hide_btn.clicked.connect(self.toggle_spectrogram_visibility)
         self.ui.reset_view_btn.setText("Audiogram") 
         self.ui.reset_view_btn.clicked.connect(self.toggle_scale)
         self.ui.speed_slider.valueChanged.connect(self.adjust_playback_speed)
+        self.ui.zoom_in_btn.clicked.connect(self.zoom_in)
+        self.ui.zoom_out_btn.clicked.connect(self.zoom_out)
+        self.ui.stop_btn.clicked.connect(self.stop)
+
+    def zoom_in(self):
+            x_range, y_range = self.ui.original_graphics_view.viewRange()
+
+            zoom_factor = 0.9  
+
+            x_center = (x_range[0] + x_range[1]) / 2
+            y_center = (y_range[0] + y_range[1]) / 2
+            new_x_range = [(x_range[0] - x_center) * zoom_factor + x_center, 
+                        (x_range[1] - x_center) * zoom_factor + x_center]
+            new_y_range = [(y_range[0] - y_center) * zoom_factor + y_center, 
+                        (y_range[1] - y_center) * zoom_factor + y_center]
+    
+            self.ui.original_graphics_view.setXRange(*new_x_range)
+            self.ui.original_graphics_view.setYRange(*new_y_range)
+            self.ui.equalized_graphics_view.setXRange(*new_x_range)
+            self.ui.equalized_graphics_view.setYRange(*new_y_range)
+
+    def zoom_out(self):
+            x_range, y_range = self.ui.original_graphics_view.viewRange()
+            
+            zoom_factor = 1.1  
+        
+            x_center = (x_range[0] + x_range[1]) / 2
+            y_center = (y_range[0] + y_range[1]) / 2
+            new_x_range = [(x_range[0] - x_center) * zoom_factor + x_center, 
+                        (x_range[1] - x_center) * zoom_factor + x_center]
+            new_y_range = [(y_range[0] - y_center) * zoom_factor + y_center, 
+                        (y_range[1] - y_center) * zoom_factor + y_center]
+            
+            self.ui.original_graphics_view.setXRange(*new_x_range)
+            self.ui.original_graphics_view.setYRange(*new_y_range)
+            self.ui.equalized_graphics_view.setXRange(*new_x_range)
+            self.ui.equalized_graphics_view.setYRange(*new_y_range)
+
+    def stop(self):
+            self.timer.stop()
+            self.is_timer_running = False
+
+            self.ui.original_graphics_view.clear()
+            self.ui.equalized_graphics_view.clear()
+            self.ui.equalized_spectro_graphics_view.clear()
+            self.ui.original_spectro_graphics_view.clear()
+            self.ui.frequency_graphics_view.clear()
+
 
     def adjust_playback_speed(self):
-        # Get the current speed multiplier from the slider
         speed = self.ui.speed_slider.value()
-
-        # Adjust the timer interval based on speed (1x, 2x, or 3x)
         base_interval = 50  # Original interval in ms (1x speed)
         self.timer.setInterval(base_interval // speed)
         print(f"Playback speed set to {speed}x, Timer interval: {self.timer.interval()} ms")
@@ -265,17 +301,15 @@ class Equilizer(QMainWindow):
         """
         if self.is_audiogram:
             self.is_audiogram = False
-            self.ui.reset_view_btn.setText("Audiogram")  # Change to audiogram
+            self.ui.reset_view_btn.setText("Audiogram")  
         else:
             self.is_audiogram = True
-            self.ui.reset_view_btn.setText("Linear")  # Change to linear
+            self.ui.reset_view_btn.setText("Linear")  
         
-        # Re-plot the graph with the new scale
         self.plot_frequency_graph()
 
 
     def toggle_spectrogram_visibility(self):
-        # Toggle the visibility of both spectrogram plots
         if self.show_spectrograms:
             self.ui.original_spectro_frame.hide()
             self.ui.equalized_spectro_frame.hide()
@@ -287,7 +321,6 @@ class Equilizer(QMainWindow):
             self.ui.original_spectro_graphics_view.show()
             self.ui.equalized_spectro_graphics_view.show()
 
-        # Update the visibility state
         self.show_spectrograms = not self.show_spectrograms
 
 
