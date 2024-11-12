@@ -9,6 +9,8 @@ from pathlib import Path
 import numpy as np
 import scipy.io.wavfile as wav
 import pyaudio
+# from arrhythmia_handler import detect_arrhythmias, apply_slider_changes
+from Spectrogram import SpectrogramViewer
 import scipy.signal
 
 
@@ -57,7 +59,7 @@ class Equilizer(QMainWindow):
         self.play_audio = False
         self.data = None  # Holds the audio data
         self.index = 0
-        self.chunk_size = 3000
+        self.chunk_size = 7000
         self.ui.Violin_slider.setRange(0, 100)
         self.ui.guitar_slider.setRange(0, 100)
         self.ui.drums_slider.setRange(0, 100)
@@ -88,13 +90,45 @@ class Equilizer(QMainWindow):
             "Violin": self.ui.Violin_slider,
         }
         self.instruments = {
-            "Guitar": (80,  3000),
+               "Guitar": (80,  3000),
             "Violin": (3000, 5000),
             "Drums": (5000,8000),
             "Saxophone": (8000,20000),
             
         }
-        # end
+        # end of music
+
+        # animal mode
+        self.animal_sliders = {
+            "wolf": self.ui.wolf_slider,
+            "horse": self.ui.horse_slider,
+            "cow": self.ui.cow_slider,
+            "dolphin": self.ui.dolphin_slider,
+            "elephant": self.ui.elephant_slider,
+            "frog": self.ui.frog_slider,
+        }
+        self.animal_ranges = {
+        "wolf": (500, 700),        
+        "horse": (100, 300),      
+        "cow": (20, 1250),         
+        "dolphin": (1000, 1500), 
+        "elephant": (20, 40),    
+        "frog": (300, 500),      
+}
+        self.ui.wolf_slider.setRange(500, 700)
+        self.ui.horse_slider.setRange(100, 300)
+        self.ui.cow_slider.setRange(80, 400)
+        self.ui.dolphin_slider.setRange(1000, 1500)
+        self.ui.elephant_slider.setRange(20, 40)
+        self.ui.frog_slider.setRange(300, 500)
+        self.ui.wolf_slider.valueChanged.connect(lambda: self.update_animal("wolf"))
+        self.ui.horse_slider.valueChanged.connect(lambda: self.update_animal("horse"))
+        self.ui.cow_slider.valueChanged.connect(lambda: self.update_animal("cow"))
+        self.ui.dolphin_slider.valueChanged.connect(lambda: self.update_animal("dolphin"))
+        self.ui.elephant_slider.valueChanged.connect(lambda: self.update_animal("elephant"))
+        self.ui.frog_slider.valueChanged.connect(lambda: self.update_animal("frog"))
+        # end of animal mode
+
         self.sliders_frames = {
             "Uniform Mode": self.ui.uniform_sliders_frame,
             "Animal Mode": self.ui.animals_sliders_frame,
@@ -159,10 +193,10 @@ class Equilizer(QMainWindow):
         }
 
         self.ecg_ranges = {
-            "vf": (10, 50),
-            "mi": (0.5, 20),
-            # "sr": (5, 30),
-            "sr": (1, 15), #Premature Ventricular Contractions
+
+            "vf": (7, 50),   #venticular fibrillation
+            "mi": (0.5, 20), #Premature Ventricular Contractions
+            "sr": (1, 15),   #brugada syndrome
 
         }
 
@@ -189,15 +223,43 @@ class Equilizer(QMainWindow):
         }
        
         self.ui.mode_comboBox.currentTextChanged.connect(self.change_sliders_for_modes)
-     
         
+        self.show_spectrograms = True
+        self.sampling_rate = 44100  # Update as needed
+        # Initialize Spectrogram Viewer with desired sampling rate
+        # self.spectrogram_viewer = SpectrogramViewer(sampling_rate=44100)
+        
+        # Assuming self.layout is the layout where you want to add the spectrogram
+        # self.ui.equalized_spectro_frame.addWidget(self.spectrogram_viewer)
+        
+        self.original_spectrogram_viewer = SpectrogramViewer(self.ui.original_spectro_graphics_view, self.sampling_rate)
+        self.equalized_spectrogram_viewer = SpectrogramViewer(self.ui.equalized_spectro_graphics_view, self.sampling_rate)
+        # self.equalized_spectrogram_viewer = SpectrogramViewer(parent=self.spectro_frame, sampling_rate=44100)
+        # self.ui.spectro_layout.addWidget(self.equalized_spectrogram_viewer)  # Ensure spectro_frame has a layout
+        # Connect button to toggle spectrogram visibility
+        self.ui.show_hide_btn.clicked.connect(self.toggle_spectrogram_visibility)
+
+
+    def toggle_spectrogram_visibility(self):
+        # Toggle the visibility of both spectrogram plots
+        if self.show_spectrograms:
+            self.ui.original_spectro_graphics_view.hide()
+            self.ui.equalized_spectro_graphics_view.hide()
+        else:
+            self.ui.original_spectro_graphics_view.show()
+            self.ui.equalized_spectro_graphics_view.show()
+
+        # Update the visibility state
+        self.show_spectrograms = not self.show_spectrograms
+
+
     def on_mode_change(self):
         if self.file_name:
             self.timer.stop()    
             self.plot_original_data()
             self.index = 0
             self.state = False
-            self.timer.start(50)    
+            self.timer.start(20)    
 
 
     def set_home_view(self):
@@ -224,6 +286,7 @@ class Equilizer(QMainWindow):
             self.ecg_mode_selected = False
 
     def open_file(self):
+        self.original_spectrogram_viewer.clear_spectrogram()
         self.file_name, _ = QFileDialog.getOpenFileName(
             self, "Open WAV", "", "WAV Files (*.wav);;All Files (*)"
         )
@@ -255,18 +318,22 @@ class Equilizer(QMainWindow):
         if len(self.data.shape) > 1:
             self.data = self.data[:, 0]
         self.ui.original_graphics_view.plot(self.data[: self.chunk_size], clear=True)
+        self.original_spectrogram_viewer.update_spectrogram(self.data[: self.chunk_size])
     
         if mode == "ECG Mode":
             # print("Displaying ECG data in static mode")
             self.ui.original_graphics_view.plot(self.data, clear=True)
+            self.original_spectrogram_viewer.update_spectrogram(self.data)
             self.filtered_data = {}
             for band_number, (low, high) in self.ecg_ranges.items():
                 self.filtered_data[band_number] = bandpass_filter(
                     self.data, low, high, self.fs
                 )
             self.ui.equalized_graphics_view.plot(self.data, clear=True)  
+            self.equalized_spectrogram_viewer.update_spectrogram(self.data)
 
-        if mode == "Musical Mode" or mode == "Uniform Mode":
+
+        if mode == "Musical Mode" or mode == "Uniform Mode" or mode == "Animal Mode":
             self.audio_stream = pyaudio.PyAudio()
             self.stream = self.audio_stream.open(
                 format=pyaudio.paInt16, channels=1, rate=self.fs, output=True
@@ -277,7 +344,7 @@ class Equilizer(QMainWindow):
                     self.filtered_data[instrument] = bandpass_filter(
                         self.data, low, high, self.fs
                     )
-                    print(self.filtered_data)
+                    
 
             elif mode == "Uniform Mode":
                 for slider_number, (low, high) in self.uniform_ranges.items():
@@ -285,10 +352,19 @@ class Equilizer(QMainWindow):
                         self.data, low, high, self.fs
                     )
                     print(self.filtered_data)
+            elif mode == "Animal Mode":
+                for animal, (low, high) in self.animal_ranges.items():
+                    self.filtered_data[animal] = bandpass_filter(
+                        self.data, low, high, self.fs
+                    )
+                    print(self.filtered_data)
 
             self.ui.equalized_graphics_view.plot(
                 self.data[: self.chunk_size], clear=True
             )
+            self.equalized_spectrogram_viewer.update_spectrogram(self.data[: self.chunk_size])
+
+
 
     def update_plot(self):
         mode = self.ui.mode_comboBox.currentText()
@@ -296,18 +372,22 @@ class Equilizer(QMainWindow):
             return
 
         if self.index + self.chunk_size <= len(self.data):
-            if mode == "Musical Mode" or mode == "Uniform Mode":
+            if mode == "Musical Mode" or mode == "Uniform Mode" or mode == "Animal Mode":
                 # Get the next chunk of the original data
                 chunk = self.data[self.index : self.index + self.chunk_size]
                 # Plot the original signal
+                # Update the spectrogram with the new chunk if available
+                self.original_spectrogram_viewer.update_spectrogram(chunk)
                 self.ui.original_graphics_view.plot(chunk, clear=True)
                 if self.state == False:
                     self.ui.equalized_graphics_view.plot(chunk, clear=True)
+                    self.equalized_spectrogram_viewer.update_spectrogram(chunk)
                 else:
                     chunk_equalized = self.equalized_signal[
                         self.index : self.index + self.chunk_size
                     ]
                     self.ui.equalized_graphics_view.plot(chunk_equalized, clear=True)
+                    self.equalized_spectrogram_viewer.update_spectrogram(chunk)
                     if self.play_equalized_audio:
                         self.stream.write(chunk_equalized.astype(np.int16).tobytes())
                 if self.play_audio:
@@ -317,7 +397,7 @@ class Equilizer(QMainWindow):
         else:
             # Stop the timer and audio stream when the end of the file is reached
             self.timer.stop()
-            if mode == "Musical Mode" or mode == "Uniform Mode":
+            if mode == "Musical Mode" or mode == "Uniform Mode" or mode == "Animal Mode":
                 self.stream.stop_stream()
                 self.stream.close()
                 self.audio_stream.terminate()
@@ -344,6 +424,18 @@ class Equilizer(QMainWindow):
         self.state = True
         self.plot_frequency_graph()
 
+    def update_animal(self, animal):
+        animal_slider_value = self.animal_sliders[animal].value() / 100
+        self.equalized_signal = np.zeros_like(self.data, dtype=np.float32)
+        
+        for Animal, _ in self.animal_ranges.items():
+            print(self.animal_sliders[Animal].value())
+            animal_slider_value = self.animal_sliders[Animal].value() / 100
+            self.equalized_signal += animal_slider_value * self.filtered_data[Animal]
+
+        self.state = True
+        self.plot_frequency_graph()
+
     def control_sound(self, btn):
         if btn == "equalized_btn":
             self.play_equalized_audio = not self.play_equalized_audio
@@ -355,9 +447,9 @@ class Equilizer(QMainWindow):
     def update_ecg_slider(self):
 
         slider_values = {
-            "vf": self.ecg_sliders["vf"].value() / 100,  # normalized scale [0, 1]
-            "mi": self.ecg_sliders["mi"].value() / 100,    
-            "sr": self.ecg_sliders["sr"].value() / 100,    
+            "vf": self.ecg_sliders["vf"].value() / 130,  # normalized scale [0, 1]
+            "mi": self.ecg_sliders["mi"].value() / 130,    
+            "sr": self.ecg_sliders["sr"].value() / 130,    
         }
 
         equalized_signal_base = self.data.astype(np.float32)
@@ -382,6 +474,7 @@ class Equilizer(QMainWindow):
         # Plot the updated equalized signal with the same y-axis limits as the original graph
         equalized_plot_item = self.ui.equalized_graphics_view.getPlotItem()
         self.ui.equalized_graphics_view.plot(self.equalized_signal[:2000], clear=True)
+        self.equalized_spectrogram_viewer.update_spectrogram(self.equalized_signal[:2000])
 
         # Set the y-axis range for the equalized graph
         equalized_plot_item.setYRange(original_y_min, original_y_max)
@@ -403,7 +496,11 @@ class Equilizer(QMainWindow):
 
     
     def calculate_initial_fft(self):
-        sampling_rate = 44100
+        mode = self.ui.mode_comboBox.currentText()
+        if mode == "ECG Mode":
+            sampling_rate = 500
+        else:
+            sampling_rate = 44100    
         dt = 1 / sampling_rate
 
         # perform FFT, get frequencies and magnitudes
@@ -419,60 +516,43 @@ class Equilizer(QMainWindow):
 
     
     def plot_frequency_graph(self):
-        # Start with the original magnitude values and adjust based on slider values
         positive_magnitude = self.original_magnitude.copy()
         
         mode = self.ui.mode_comboBox.currentText()
         if mode == "Uniform Mode":
             self.ui.frequency_graphics_view.setLimits(xMin = 1050, xMax = 2100)
-            for slider_number, slider in self.uniform_sliders.items():
-                slider_value = slider.value() / 100
-                # slider range (low, high)
-                low, high = self.uniform_ranges[slider_number]
-                # find the indices in self.positive_freqs that correspond to this range
-                indices_in_range = np.where((self.positive_freqs >= low) & (self.positive_freqs < high))[0]
-                print("inst: ", slider_number)
-                print("low, high: ", low, high)
-                print ("indices_in_range: ", indices_in_range)
-                # update the magnitude for frequencies within this range
-                positive_magnitude[indices_in_range] *= slider_value
-        
+            mode_sliders = self.uniform_sliders
+            mode_ranges = self.uniform_ranges
+            
         elif mode == "Musical Mode":
-            # self.ui.frequency_graphics_view.setLimits(xMin = 80, xMax = 7999) 
-            for inst, _ in self.instruments.items():
-                instrument_slider_value = self.sliders[inst].value() / 100
-                # slider range (low, high)
-                low, high = self.instruments[inst]
-                low = low / 2
-                high = high / 2
-                print("inst: ", inst)
-                print("low, high: ", low, high)
-                # find the indices in self.positive_freqs that correspond to this range
-                indices_in_range = np.where((self.positive_freqs >= low) & (self.positive_freqs < high))[0]
-                print ("indices_in_range: ", indices_in_range)
-                # update the magnitude for frequencies within this range
-                positive_magnitude[indices_in_range] *= instrument_slider_value    
+            self.ui.frequency_graphics_view.setLimits(xMin = 80, xMax = 7999) 
+            mode_sliders = self.sliders
+            mode_ranges = self.instruments
         
         elif mode == "ECG Mode":
-            # self.ui.frequency_graphics_view.setLimits(xMin = 0, xMax = 70)    
-            slider_values = {
-            "vf": self.ecg_sliders["vf"].value() / 130,  # normalized scale [0, 1]
-            "mi": self.ecg_sliders["mi"].value() / 130,    
-            "sr": self.ecg_sliders["sr"].value() / 130,    
-            }
-            
-            for slider in slider_values:
-                slider_value = slider_values[slider]
-                print(slider_value)
-                low, high = self.ecg_ranges[slider]
-                # find the indices in self.positive_freqs that correspond to this range
-                indices_in_range = np.where((self.positive_freqs >= low) & (self.positive_freqs < high))[0] 
-                print("slider: ", slider)
-                print("low, high: ", low, high)
-                print ("indices_in_range: ", indices_in_range)
-                positive_magnitude[indices_in_range] *= slider_value
-                print("positive_magnitude[indices_in_range]: ", positive_magnitude[indices_in_range])
+            self.ui.frequency_graphics_view.setLimits(xMin = 0, xMax = 50) 
+            mode_sliders = self.ecg_sliders
+            mode_ranges = self.ecg_ranges  
+        elif mode == "Animal Mode":
+            self.ui.frequency_graphics_view.setLimits(xMin = 20, xMax = 1500) 
+            mode_sliders = self.animal_sliders
+            mode_ranges = self.animal_ranges
 
+        for slider_number, slider in mode_sliders.items():
+            slider_value = slider.value() / 100
+            # slider range (low, high)
+            low, high = mode_ranges[slider_number]
+            if mode == "Musical Mode":
+                low /= 2
+                high /= 2
+            # find the indices in self.positive_freqs that correspond to this range
+            indices_in_range = np.where((self.positive_freqs >= low) & (self.positive_freqs < high))[0]
+            print("slider_number: ", slider_number)
+            print("low, high: ", low, high)
+            print ("indices_in_range: ", indices_in_range)
+            # update the magnitude for frequencies within this range
+            positive_magnitude[indices_in_range] *= slider_value
+        
         # print(self.positive_freqs)
         # Ensure arrays are 1D
         frequencies_array = np.ravel(np.array(self.positive_freqs))
