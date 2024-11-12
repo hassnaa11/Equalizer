@@ -120,12 +120,12 @@ class Equilizer(QMainWindow):
         "elephant": (0, 800),    
         "frog": (1600, 2400),      
 }
-        self.ui.wolf_slider.setValue(800)
-        self.ui.horse_slider.setValue(800)
-        self.ui.cow_slider.setValue(800)
-        self.ui.dolphin_slider.setValue(1000)
-        self.ui.elephant_slider.setValue(800)
-        self.ui.frog_slider.setValue(800)
+        self.ui.wolf_slider.setRange(1,100)
+        self.ui.horse_slider.setRange(1,100)
+        self.ui.cow_slider.setRange(1,100)
+        self.ui.dolphin_slider.setRange(1,100)
+        self.ui.elephant_slider.setRange(1,100)
+        self.ui.frog_slider.setRange(1,100)
         self.ui.wolf_slider.valueChanged.connect(lambda: self.update_animal("wolf"))
         self.ui.horse_slider.valueChanged.connect(lambda: self.update_animal("horse"))
         self.ui.cow_slider.valueChanged.connect(lambda: self.update_animal("cow"))
