@@ -42,7 +42,8 @@ class MplCanvas(Canvas):
                 y_min, y_max = 1050, 2100  # Default range
 
             # Use 'viridis' colormap for greens and blues
-            Pxx, freqs, bins, im = self.axes.specgram(signal, Fs=fs, cmap='viridis', NFFT=1024, noverlap=512)
+            self.axes.specgram(signal, Fs=fs, cmap='viridis', NFFT=512, noverlap=256) 
+            
             self.axes.set_ylim(y_min, y_max)  # Apply the y-axis limits
 
             # Set specific y-axis ticks based on y_min and y_max
