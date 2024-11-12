@@ -272,7 +272,7 @@ class Equilizer(QMainWindow):
             self.state = False
             self.timer.start(20)  
             self.is_timer_running = True  
-            self.ui.play_pause_btn.setIcon(QIcon(f'icons/icons/pause copy.svg'))
+            
 
     def replay(self):
         

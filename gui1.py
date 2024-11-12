@@ -449,7 +449,7 @@ class Ui_MainWindow(object):
 "border:none;")
         self.play_pause_btn.setText("")
         icon3 = QtGui.QIcon()
-        icon3.addPixmap(QtGui.QPixmap(":/icons/icons/play copy.svg"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon3.addPixmap(QtGui.QPixmap(":/icons/icons/pause copy.svg"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.play_pause_btn.setIcon(icon3)
         self.play_pause_btn.setIconSize(QtCore.QSize(22, 22))
         self.play_pause_btn.setObjectName("play_pause_btn")
