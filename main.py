@@ -58,10 +58,10 @@ class Equilizer(QMainWindow):
         self.data = None  # Holds the audio data
         self.index = 0
         self.chunk_size = 3000
-        self.ui.Violin_slider.setRange(1, 100)
-        self.ui.guitar_slider.setRange(1, 100)
-        self.ui.drums_slider.setRange(1, 100)
-        self.ui.Saxophone_slider.setRange(1, 100)
+        self.ui.Violin_slider.setRange(0, 100)
+        self.ui.guitar_slider.setRange(0, 100)
+        self.ui.drums_slider.setRange(0, 100)
+        self.ui.Saxophone_slider.setRange(0, 100)
         self.ui.guitar_slider.valueChanged.connect(
             lambda: self.update_instrument("Guitar")
         )
@@ -88,10 +88,10 @@ class Equilizer(QMainWindow):
             "Violin": self.ui.Violin_slider,
         }
         self.instruments = {
-            "Guitar": (80, 1500),
-            "Violin": (1500, 3000),
-            "Drums": (3000, 5000),
-            "Saxophone": (5000,8000),
+            "Guitar": (80,  3000),
+            "Violin": (3000, 5000),
+            "Drums": (5000,8000),
+            "Saxophone": (8000,20000),
             
         }
         # end
