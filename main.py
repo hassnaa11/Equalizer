@@ -59,7 +59,7 @@ class Equilizer(QMainWindow):
         self.play_audio = False
         self.data = None  # Holds the audio data
         self.index = 0
-        self.chunk_size = 3000
+        self.chunk_size = 1024
         self.ui.Violin_slider.setRange(1, 100)
         self.ui.guitar_slider.setRange(1, 100)
         self.ui.drums_slider.setRange(1, 100)
@@ -259,7 +259,7 @@ class Equilizer(QMainWindow):
             self.plot_original_data()
             self.index = 0
             self.state = False
-            self.timer.start(50)    
+            self.timer.start(20)    
 
 
     def set_home_view(self):
