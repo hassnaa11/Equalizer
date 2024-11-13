@@ -59,8 +59,8 @@ class Equilizer(QMainWindow):
 
         # button functions
         self.ui.play_pause_btn.clicked.connect(self.play_pause)
-        self.ui.show_hide_btn.clicked.connect(self.toggle_spectrogram_visibility)
-        self.ui.replay_btn.clicked.connect(self.on_mode_change)
+        # self.ui.show_hide_btn.clicked.connect(self.toggle_spectrogram_visibility)
+        self.ui.replay_btn.clicked.connect(self.replay)
 
         # musical mode
         self.timer = QTimer(self)
@@ -75,6 +75,7 @@ class Equilizer(QMainWindow):
         self.data = None  # Holds the audio data
         self.index = 0
         self.chunk_size = 3000
+        self.ui.pushButton_12.setIcon(QIcon(f'icons/icons/drums2.png'))
         self.ui.Violin_slider.setRange(1, 100)
         self.ui.guitar_slider.setRange(1, 100)
         self.ui.drums_slider.setRange(1, 100)
@@ -240,36 +241,109 @@ class Equilizer(QMainWindow):
         self.ui.mode_comboBox.currentTextChanged.connect(self.change_sliders_for_modes)
         
         self.show_spectrograms = True
-        self.sampling_rate = 44100  # Update as needed
-        # Initialize Spectrogram Viewer with desired sampling rate
-        # self.spectrogram_viewer = SpectrogramViewer(sampling_rate=44100)
-        
-        # Assuming self.layout is the layout where you want to add the spectrogram
-        # self.ui.equalized_spectro_frame.addWidget(self.spectrogram_viewer)
-        
+        self.sampling_rate = 44100  
         self.original_spectrogram_viewer = SpectrogramViewer(self.ui.original_spectro_graphics_view, self.sampling_rate)
         self.equalized_spectrogram_viewer = SpectrogramViewer(self.ui.equalized_spectro_graphics_view, self.sampling_rate)
-        # self.equalized_spectrogram_viewer = SpectrogramViewer(parent=self.spectro_frame, sampling_rate=44100)
-        # self.ui.spectro_layout.addWidget(self.equalized_spectrogram_viewer)  # Ensure spectro_frame has a layout
-        # Connect button to toggle spectrogram visibility
+        self.is_audiogram = False
         self.ui.show_hide_btn.clicked.connect(self.toggle_spectrogram_visibility)
+        self.ui.reset_view_btn.setText("Audiogram") 
+        self.ui.reset_view_btn.clicked.connect(self.toggle_scale)
+        self.ui.speed_slider.valueChanged.connect(self.adjust_playback_speed)
+        self.ui.zoom_in_btn.clicked.connect(self.zoom_in)
+        self.ui.zoom_out_btn.clicked.connect(self.zoom_out)
+        self.ui.stop_btn.clicked.connect(self.stop)
+        
+        self.c = 0
+
+    def zoom_in(self):
+            x_range, y_range = self.ui.original_graphics_view.viewRange()
+
+            zoom_factor = 0.9  
+
+            x_center = (x_range[0] + x_range[1]) / 2
+            y_center = (y_range[0] + y_range[1]) / 2
+            new_x_range = [(x_range[0] - x_center) * zoom_factor + x_center, 
+                        (x_range[1] - x_center) * zoom_factor + x_center]
+            new_y_range = [(y_range[0] - y_center) * zoom_factor + y_center, 
+                        (y_range[1] - y_center) * zoom_factor + y_center]
+    
+            self.ui.original_graphics_view.setXRange(*new_x_range)
+            self.ui.original_graphics_view.setYRange(*new_y_range)
+            self.ui.equalized_graphics_view.setXRange(*new_x_range)
+            self.ui.equalized_graphics_view.setYRange(*new_y_range)
+
+    def zoom_out(self):
+            x_range, y_range = self.ui.original_graphics_view.viewRange()
+            
+            zoom_factor = 1.1  
+        
+            x_center = (x_range[0] + x_range[1]) / 2
+            y_center = (y_range[0] + y_range[1]) / 2
+            new_x_range = [(x_range[0] - x_center) * zoom_factor + x_center, 
+                        (x_range[1] - x_center) * zoom_factor + x_center]
+            new_y_range = [(y_range[0] - y_center) * zoom_factor + y_center, 
+                        (y_range[1] - y_center) * zoom_factor + y_center]
+            
+            self.ui.original_graphics_view.setXRange(*new_x_range)
+            self.ui.original_graphics_view.setYRange(*new_y_range)
+            self.ui.equalized_graphics_view.setXRange(*new_x_range)
+            self.ui.equalized_graphics_view.setYRange(*new_y_range)
+
+    def stop(self):
+            self.stream.close()
+            self.timer.stop()
+            self.data = None
+            self.audio_stream.terminate()
+            self.is_timer_running = False
+            self.state = False
+            self.index = 0
+            self.ui.play_pause_btn.setIcon(QIcon(f'icons/icons/play copy.svg')) 
+            self.original_spectrogram_viewer.clear_spectrogram()
+            self.equalized_spectrogram_viewer.clear_spectrogram()
+            self.ui.frequency_graphics_view.clear()
+            self.ui.original_graphics_view.clear()
+            self.ui.equalized_graphics_view.clear()
+            self.reset_sliders()
+           
+
+    def adjust_playback_speed(self):
+        speed = self.ui.speed_slider.value()
+        base_interval = 50  # Original interval in ms (1x speed)
+        self.timer.setInterval(base_interval // speed)
+        print(f"Playback speed set to {speed}x, Timer interval: {self.timer.interval()} ms")
+
+
+    def toggle_scale(self):
+        """
+        Toggle between linear and audiogram scales.
+        """
+        if self.is_audiogram:
+            self.is_audiogram = False
+            self.ui.reset_view_btn.setText("Audiogram")  
+        else:
+            self.is_audiogram = True
+            self.ui.reset_view_btn.setText("Linear")  
+        
+        self.plot_frequency_graph()
         self.c = 0
         self.phases = []
 
     def toggle_spectrogram_visibility(self):
-        # Toggle the visibility of both spectrogram plots
         if self.show_spectrograms:
             self.ui.original_spectro_frame.hide()
             self.ui.equalized_spectro_frame.hide()
             self.ui.original_spectro_graphics_view.hide()
             self.ui.equalized_spectro_graphics_view.hide()
+            self.original_spectrogram_viewer.close_spectrogram()
+            self.equalized_spectrogram_viewer.close_spectrogram()
         else:
             self.ui.original_spectro_frame.show()
             self.ui.equalized_spectro_frame.show()
             self.ui.original_spectro_graphics_view.show()
             self.ui.equalized_spectro_graphics_view.show()
+            self.original_spectrogram_viewer.show_spectrogram()
+            self.equalized_spectrogram_viewer.show_spectrogram()
 
-        # Update the visibility state
         self.show_spectrograms = not self.show_spectrograms
 
 
@@ -282,19 +356,7 @@ class Equilizer(QMainWindow):
             self.state = False
             self.timer.start()  
             self.is_timer_running = True  
-            
-
-    def replay(self):
-        
-        self.ui.wolf_slider.setValue(1)
-        self.ui.horse_slider.setValue(1)
-        self.ui.cow_slider.setValue(1)
-        self.ui.dolphin_slider.setValue(1)
-        self.ui.elephant_slider.setValue(1)
-        self.ui.frog_slider.setValue(1)
-
-        self.on_mode_change()
-        
+                  
 
     def play_pause(self):
         if self.is_timer_running:
@@ -302,9 +364,54 @@ class Equilizer(QMainWindow):
             self.timer.stop()
         else:
             self.ui.play_pause_btn.setIcon(QIcon(f'icons/icons/pause copy.svg'))
-            self.timer.start()
+            self.timer.start(50)
         self.is_timer_running = not self.is_timer_running
-       
+
+    def replay(self):
+        
+        self.is_timer_running = False
+        # self.index = 0
+        self.on_mode_change()
+        self.ui.play_pause_btn.setIcon(QIcon(f'icons/icons/pause copy.svg'))
+        self.reset_sliders()    
+        self.state = True
+        self.plot_frequency_graph() 
+        
+         
+    def reset_sliders(self):
+         # Reset the sliders to their initial values
+
+        #animal mode
+        self.ui.wolf_slider.setValue(1)
+        self.ui.horse_slider.setValue(1)
+        self.ui.cow_slider.setValue(1)
+        self.ui.dolphin_slider.setValue(1)
+        self.ui.elephant_slider.setValue(1)
+        self.ui.frog_slider.setValue(1)
+
+        #ecg mode
+        self.ui.vf_arrhythmia_slider.setValue(0)
+        self.ui.mi_arrhythmia_slider.setValue(0)
+        self.ui.sr_arrhythmia_slider.setValue(0)
+
+        #uniform mode
+        self.ui.uniform_slider_1.setValue(100)
+        self.ui.uniform_slider_2.setValue(100)
+        self.ui.uniform_slider_3.setValue(100)
+        self.ui.uniform_slider_4.setValue(100)
+        self.ui.uniform_slider_5.setValue(100)
+        self.ui.uniform_slider_6.setValue(100)
+        self.ui.uniform_slider_7.setValue(100)
+        self.ui.uniform_slider_8.setValue(100)
+        self.ui.uniform_slider_9.setValue(100)
+        self.ui.uniform_slider_10.setValue(100)
+
+        #musical mode
+        self.ui.guitar_slider.setValue(1)
+        self.ui.Violin_slider.setValue(1)
+        self.ui.drums_slider.setValue(1)
+        self.ui.Saxophone_slider.setValue(1)
+
 
     def set_home_view(self):
         if self.ecg_mode_selected:
@@ -352,7 +459,7 @@ class Equilizer(QMainWindow):
         mode = self.ui.mode_comboBox.currentText()
         if mode == "ECG Mode" and self.fs != 500:
             print("Resampling ECG signal to 500 Hz")
-            target_fs = 500
+            target_fs = 500                                           
             num_samples = int(len(self.data) * target_fs / self.fs)
             self.data = scipy.signal.resample(self.data, num_samples)
             self.fs = target_fs
@@ -369,6 +476,8 @@ class Equilizer(QMainWindow):
             self.original_spectrogram_viewer.update_spectrogram(self.data[: self.chunk_size], mode = "Uniform Mode")
         elif mode == "Musical Mode":
             self.original_spectrogram_viewer.update_spectrogram(self.data[: self.chunk_size], mode = "Musical Mode")
+        elif mode == "Animal Mode":
+            self.original_spectrogram_viewer.update_spectrogram(self.data[: self.chunk_size], mode = "Animal Mode")
     
         if mode == "ECG Mode":
             # print("Displaying ECG data in static mode")
@@ -418,7 +527,6 @@ class Equilizer(QMainWindow):
             self.ui.equalized_graphics_view.plot(
                 self.data[: self.chunk_size], clear=True
             )
-            # self.equalized_spectrogram_viewer.update_spectrogram(self.data[: self.chunk_size])
 
 
 
@@ -443,6 +551,8 @@ class Equilizer(QMainWindow):
 
                     if mode == "Musical Mode":
                         self.equalized_spectrogram_viewer.update_spectrogram(chunk, mode = "Musical Mode")
+                    elif mode == "Animal Mode":
+                        self.equalized_spectrogram_viewer.update_spectrogram(chunk, mode = "Animal Mode")
                     else:
                         self.equalized_spectrogram_viewer.update_spectrogram(chunk, mode = "Uniform Mode")
                     
@@ -454,6 +564,8 @@ class Equilizer(QMainWindow):
 
                     if mode == "Musical Mode":
                         self.equalized_spectrogram_viewer.update_spectrogram(chunk_equalized, mode = "Musical Mode")
+                    elif mode == "Animal Mode":
+                        self.equalized_spectrogram_viewer.update_spectrogram(chunk_equalized, mode = "Animal Mode")
                     else:
                         self.equalized_spectrogram_viewer.update_spectrogram(chunk_equalized, mode = "Uniform Mode")
 
@@ -653,7 +765,10 @@ class Equilizer(QMainWindow):
                 
         # clear the previous graph and plot updated graph
         self.ui.frequency_graphics_view.clear()
-        self.ui.frequency_graphics_view.plot(frequencies_array, magnitude_array)
+        # self.ui.frequency_graphics_view.plot(frequencies_array, magnitude_array)
+        # Plot in linear scale by default
+        if not self.is_audiogram:
+            self.ui.frequency_graphics_view.plot(frequencies_array, magnitude_array)
         
         
         self.phases = np.ravel(np.array(self.phases))
@@ -710,7 +825,20 @@ class Equilizer(QMainWindow):
             self.player.setMedia(QMediaContent(QUrl.fromLocalFile(self.audio_file)))
             self.player.play()
 
+        else:
+            # Use the audiogram scale (logarithmic) if toggled
+            self.plot_audiogram_scale(frequencies_array, magnitude_array)
 
+
+    def plot_audiogram_scale(self, frequencies, magnitudes):
+        """
+        Plots frequencies on an audiogram scale (logarithmic) for better analysis.
+        """
+        # Apply logarithmic scale for frequencies
+        log_frequencies = np.log10(frequencies + 1)  # Adding 1 to avoid log(0)
+        
+        # Plot the audiogram-scaled graph
+        self.ui.frequency_graphics_view.plot(log_frequencies, magnitudes)
 
 
 if __name__ == "__main__":
@@ -718,6 +846,3 @@ if __name__ == "__main__":
     ui = Equilizer()
     ui.showMaximized()
     app.exec_()
-
-
-
