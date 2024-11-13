@@ -290,14 +290,17 @@ class Equilizer(QMainWindow):
             self.ui.equalized_graphics_view.setYRange(*new_y_range)
 
     def stop(self):
-            self.stream.close()
+            # self.stream.close()
             self.timer.stop()
             self.data = None
-            self.audio_stream.terminate()
+            # self.audio_stream.terminate()
             self.is_timer_running = False
             self.state = False
             self.index = 0
             self.ui.play_pause_btn.setIcon(QIcon(f'icons/icons/play copy.svg')) 
+            self.player.stop()
+            self.play_audio = False
+            self.play_equalized_audio = False
             self.original_spectrogram_viewer.clear_spectrogram()
             self.equalized_spectrogram_viewer.clear_spectrogram()
             self.ui.frequency_graphics_view.clear()
@@ -362,15 +365,22 @@ class Equilizer(QMainWindow):
         if self.is_timer_running:
             self.ui.play_pause_btn.setIcon(QIcon(f'icons/icons/play copy.svg'))
             self.timer.stop()
+            self.player.pause()
         else:
             self.ui.play_pause_btn.setIcon(QIcon(f'icons/icons/pause copy.svg'))
             self.timer.start(50)
+            self.player.play()
         self.is_timer_running = not self.is_timer_running
+        self.play_audio = not self.play_audio
+        self.play_equalized_audio = not self.play_equalized_audio
 
     def replay(self):
         
         self.is_timer_running = False
-        # self.index = 0
+        self.index = 0
+        self.player.stop()
+        self.play_audio = False
+        self.play_equalized_audio = False
         self.on_mode_change()
         self.ui.play_pause_btn.setIcon(QIcon(f'icons/icons/pause copy.svg'))
         self.reset_sliders()    
@@ -437,6 +447,7 @@ class Equilizer(QMainWindow):
             self.ecg_mode_selected = False
 
     def open_file(self):
+        self.reset_sliders()
         self.file_name, _ = QFileDialog.getOpenFileName(
             self, "Open WAV", "", "WAV Files (*.wav);;All Files (*)"
         )
