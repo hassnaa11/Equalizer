@@ -72,3 +72,9 @@ class SpectrogramViewer(QtWidgets.QWidget):
     
         self.canvas.axes.cla()  
         self.canvas.draw()  
+
+    def close_spectrogram(self):
+        self.canvas.close()
+
+    def show_spectrogram(self):
+        self.canvas.show()

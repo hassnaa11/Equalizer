@@ -52,8 +52,8 @@ class Equilizer(QMainWindow):
 
         # button functions
         self.ui.play_pause_btn.clicked.connect(self.play_pause)
-        self.ui.show_hide_btn.clicked.connect(self.toggle_spectrogram_visibility)
-        self.ui.replay_btn.clicked.connect(self.on_mode_change)
+        # self.ui.show_hide_btn.clicked.connect(self.toggle_spectrogram_visibility)
+        self.ui.replay_btn.clicked.connect(self.replay)
 
         # musical mode
         self.timer = QTimer(self)
@@ -66,6 +66,7 @@ class Equilizer(QMainWindow):
         self.data = None  # Holds the audio data
         self.index = 0
         self.chunk_size = 3000
+        self.ui.pushButton_12.setIcon(QIcon(f'icons/icons/drums2.png'))
         self.ui.Violin_slider.setRange(1, 100)
         self.ui.guitar_slider.setRange(1, 100)
         self.ui.drums_slider.setRange(1, 100)
@@ -278,15 +279,21 @@ class Equilizer(QMainWindow):
             self.ui.equalized_graphics_view.setYRange(*new_y_range)
 
     def stop(self):
+            self.stream.close()
             self.timer.stop()
+            self.data = None
+            self.audio_stream.terminate()
             self.is_timer_running = False
-
+            self.state = False
+            self.index = 0
+            self.ui.play_pause_btn.setIcon(QIcon(f'icons/icons/play copy.svg')) 
+            self.original_spectrogram_viewer.clear_spectrogram()
+            self.equalized_spectrogram_viewer.clear_spectrogram()
+            self.ui.frequency_graphics_view.clear()
             self.ui.original_graphics_view.clear()
             self.ui.equalized_graphics_view.clear()
-            self.ui.equalized_spectro_graphics_view.clear()
-            self.ui.original_spectro_graphics_view.clear()
-            self.ui.frequency_graphics_view.clear()
-
+            self.reset_sliders()
+           
 
     def adjust_playback_speed(self):
         speed = self.ui.speed_slider.value()
@@ -315,11 +322,15 @@ class Equilizer(QMainWindow):
             self.ui.equalized_spectro_frame.hide()
             self.ui.original_spectro_graphics_view.hide()
             self.ui.equalized_spectro_graphics_view.hide()
+            self.original_spectrogram_viewer.close_spectrogram()
+            self.equalized_spectrogram_viewer.close_spectrogram()
         else:
             self.ui.original_spectro_frame.show()
             self.ui.equalized_spectro_frame.show()
             self.ui.original_spectro_graphics_view.show()
             self.ui.equalized_spectro_graphics_view.show()
+            self.original_spectrogram_viewer.show_spectrogram()
+            self.equalized_spectrogram_viewer.show_spectrogram()
 
         self.show_spectrograms = not self.show_spectrograms
 
@@ -331,21 +342,9 @@ class Equilizer(QMainWindow):
             self.plot_original_data()
             self.index = 0
             self.state = False
-            self.timer.start(20)  
+            self.timer.start(50)  
             self.is_timer_running = True  
-            
-
-    def replay(self):
-        
-        self.ui.wolf_slider.setValue(1)
-        self.ui.horse_slider.setValue(1)
-        self.ui.cow_slider.setValue(1)
-        self.ui.dolphin_slider.setValue(1)
-        self.ui.elephant_slider.setValue(1)
-        self.ui.frog_slider.setValue(1)
-
-        self.on_mode_change()
-        
+                  
 
     def play_pause(self):
         if self.is_timer_running:
@@ -353,9 +352,54 @@ class Equilizer(QMainWindow):
             self.timer.stop()
         else:
             self.ui.play_pause_btn.setIcon(QIcon(f'icons/icons/pause copy.svg'))
-            self.timer.start(20)
+            self.timer.start(50)
         self.is_timer_running = not self.is_timer_running
-       
+
+    def replay(self):
+        
+        self.is_timer_running = False
+        # self.index = 0
+        self.on_mode_change()
+        self.ui.play_pause_btn.setIcon(QIcon(f'icons/icons/pause copy.svg'))
+        self.reset_sliders()    
+        self.state = True
+        self.plot_frequency_graph() 
+        
+         
+    def reset_sliders(self):
+         # Reset the sliders to their initial values
+
+        #animal mode
+        self.ui.wolf_slider.setValue(1)
+        self.ui.horse_slider.setValue(1)
+        self.ui.cow_slider.setValue(1)
+        self.ui.dolphin_slider.setValue(1)
+        self.ui.elephant_slider.setValue(1)
+        self.ui.frog_slider.setValue(1)
+
+        #ecg mode
+        self.ui.vf_arrhythmia_slider.setValue(0)
+        self.ui.mi_arrhythmia_slider.setValue(0)
+        self.ui.sr_arrhythmia_slider.setValue(0)
+
+        #uniform mode
+        self.ui.uniform_slider_1.setValue(100)
+        self.ui.uniform_slider_2.setValue(100)
+        self.ui.uniform_slider_3.setValue(100)
+        self.ui.uniform_slider_4.setValue(100)
+        self.ui.uniform_slider_5.setValue(100)
+        self.ui.uniform_slider_6.setValue(100)
+        self.ui.uniform_slider_7.setValue(100)
+        self.ui.uniform_slider_8.setValue(100)
+        self.ui.uniform_slider_9.setValue(100)
+        self.ui.uniform_slider_10.setValue(100)
+
+        #musical mode
+        self.ui.guitar_slider.setValue(1)
+        self.ui.Violin_slider.setValue(1)
+        self.ui.drums_slider.setValue(1)
+        self.ui.Saxophone_slider.setValue(1)
+
 
     def set_home_view(self):
         if self.ecg_mode_selected:
@@ -708,7 +752,6 @@ class Equilizer(QMainWindow):
         
         # Plot the audiogram-scaled graph
         self.ui.frequency_graphics_view.plot(log_frequencies, magnitudes)
-
 
 
 if __name__ == "__main__":
