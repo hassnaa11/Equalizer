@@ -464,6 +464,8 @@ class Equilizer(QMainWindow):
 
     def plot_original_data(self):
         self.fs, self.data = wav.read(self.file_name)  # Read the WAV file
+        if self.data.ndim > 1:
+            self.data = self.data.flatten() 
         # self.fs = 22050
         print(f"Sample rate of the file: {self.fs}")
 
@@ -543,6 +545,8 @@ class Equilizer(QMainWindow):
 
     def update_plot(self):
         mode = self.ui.mode_comboBox.currentText()
+        if self.data.ndim > 1:
+            self.data = self.data.flatten() 
         if mode == "ECG Mode":
             return
 

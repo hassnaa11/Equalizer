@@ -24,7 +24,10 @@ class MplCanvas(Canvas):
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=UserWarning)
             warnings.filterwarnings("ignore", category=RuntimeWarning)
-            self.axes.cla()  
+            self.axes.cla() 
+
+            if signal.ndim > 1:
+                signal = signal.flatten()  
 
             if mode == "Uniform Mode":
                 y_min, y_max = 1050, 2100
@@ -38,7 +41,7 @@ class MplCanvas(Canvas):
                 y_min, y_max = 1050, 2100  
 
             NFFT = 1300  # Larger FFT window size 1024
-            noverlap = 1000  # Increase overlap for smoother transitions 768
+            noverlap = NFFT//2  # Increase overlap for smoother transitions 768
 
             self.axes.specgram(signal, Fs=fs, cmap='viridis', NFFT=NFFT, noverlap=noverlap)
 
