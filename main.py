@@ -12,6 +12,13 @@ import pyaudio
 # from arrhythmia_handler import detect_arrhythmias, apply_slider_changes
 from Spectrogram import SpectrogramViewer
 import scipy.signal
+from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
+from PyQt5.QtCore import QUrl
+import numpy as np, bisect, librosa, soundfile as sf
+import os
+import tempfile
+temp_audio_file = tempfile.mktemp(suffix=".wav")
+# self.audio_file = tempfile.mktemp(suffix=".wav")
 
 
 def bandpass_filter(data, lowcut, highcut, fs, order=5):
@@ -57,10 +64,12 @@ class Equilizer(QMainWindow):
 
         # musical mode
         self.timer = QTimer(self)
+        self.timer.setInterval(100)
         self.state = False
         self.timer.timeout.connect(self.update_plot)
         self.is_timer_running = False
         self.audio_stream = None
+        self.player = QMediaPlayer()
         self.play_equalized_audio = False
         self.play_audio = False
         self.data = None  # Holds the audio data
@@ -244,7 +253,8 @@ class Equilizer(QMainWindow):
         # self.ui.spectro_layout.addWidget(self.equalized_spectrogram_viewer)  # Ensure spectro_frame has a layout
         # Connect button to toggle spectrogram visibility
         self.ui.show_hide_btn.clicked.connect(self.toggle_spectrogram_visibility)
-
+        self.c = 0
+        self.phases = []
 
     def toggle_spectrogram_visibility(self):
         # Toggle the visibility of both spectrogram plots
@@ -270,7 +280,7 @@ class Equilizer(QMainWindow):
             self.plot_original_data()
             self.index = 0
             self.state = False
-            self.timer.start(20)  
+            self.timer.start()  
             self.is_timer_running = True  
             
 
@@ -292,7 +302,7 @@ class Equilizer(QMainWindow):
             self.timer.stop()
         else:
             self.ui.play_pause_btn.setIcon(QIcon(f'icons/icons/pause copy.svg'))
-            self.timer.start(20)
+            self.timer.start()
         self.is_timer_running = not self.is_timer_running
        
 
@@ -323,16 +333,20 @@ class Equilizer(QMainWindow):
         self.file_name, _ = QFileDialog.getOpenFileName(
             self, "Open WAV", "", "WAV Files (*.wav);;All Files (*)"
         )
+        print("fileeeeeeeeee: ", self.file_name)
         if self.file_name:
             self.from_file = True
             self.plot_original_data()
             self.index = 0
             # self.play_audio=False
-            self.timer.start(50)
+            self.player.setMedia(QMediaContent(QUrl.fromLocalFile(self.file_name)))
+            # self.player.play()
+            self.timer.start()
             print(self.file_name)
 
     def plot_original_data(self):
         self.fs, self.data = wav.read(self.file_name)  # Read the WAV file
+        # self.fs = 22050
         print(f"Sample rate of the file: {self.fs}")
 
         mode = self.ui.mode_comboBox.currentText()
@@ -370,10 +384,12 @@ class Equilizer(QMainWindow):
 
 
         if mode == "Musical Mode" or mode == "Uniform Mode" or mode == "Animal Mode":
-            self.audio_stream = pyaudio.PyAudio()
-            self.stream = self.audio_stream.open(
-                format=pyaudio.paInt16, channels=1, rate=self.fs, output=True
-            )
+            # self.audio_stream = pyaudio.PyAudio()
+            # self.stream = self.audio_stream.open(
+            #     format=pyaudio.paInt16, channels=1, rate=self.fs, output=True
+            # )
+            
+            
             self.filtered_data = {}
             if mode == "Musical Mode":
                 for instrument, (low, high) in self.instruments.items():
@@ -415,49 +431,53 @@ class Equilizer(QMainWindow):
             if mode == "Musical Mode" or mode == "Uniform Mode" or mode == "Animal Mode":
                 # Get the next chunk of the original data
                 chunk = self.data[self.index : self.index + self.chunk_size]
-                downsampled_chunk = chunk[::2]  # Downsample by a factor of 2
 
                 if mode == "Musical Mode":
-                    self.original_spectrogram_viewer.update_spectrogram(downsampled_chunk, mode="Musical Mode")
-
-                    self.original_spectrogram_viewer.update_spectrogram(downsampled_chunk, mode = "Musical Mode")
+                    self.original_spectrogram_viewer.update_spectrogram(chunk, mode = "Musical Mode")
                 else:
-                    self.original_spectrogram_viewer.update_spectrogram(downsampled_chunk, mode = "Uniform Mode")
+                    self.original_spectrogram_viewer.update_spectrogram(chunk, mode = "Uniform Mode")
 
                 self.ui.original_graphics_view.plot(chunk, clear=True)
                 if self.state == False:
                     self.ui.equalized_graphics_view.plot(chunk, clear=True)
 
                     if mode == "Musical Mode":
-                        self.equalized_spectrogram_viewer.update_spectrogram(downsampled_chunk, mode = "Musical Mode")
+                        self.equalized_spectrogram_viewer.update_spectrogram(chunk, mode = "Musical Mode")
                     else:
-                        self.equalized_spectrogram_viewer.update_spectrogram(downsampled_chunk, mode = "Uniform Mode")
+                        self.equalized_spectrogram_viewer.update_spectrogram(chunk, mode = "Uniform Mode")
                     
                 else:
                     chunk_equalized = self.equalized_signal[
                         self.index : self.index + self.chunk_size
                     ]
-                    downsampled_equalized_chunk = chunk_equalized[::2]  # Downsample by a factor of 2
                     self.ui.equalized_graphics_view.plot(chunk_equalized, clear=True)
 
                     if mode == "Musical Mode":
-                        self.equalized_spectrogram_viewer.update_spectrogram(downsampled_equalized_chunk, mode = "Musical Mode")
+                        self.equalized_spectrogram_viewer.update_spectrogram(chunk_equalized, mode = "Musical Mode")
                     else:
-                        self.equalized_spectrogram_viewer.update_spectrogram(downsampled_equalized_chunk, mode = "Uniform Mode")
+                        self.equalized_spectrogram_viewer.update_spectrogram(chunk_equalized, mode = "Uniform Mode")
 
-                    if self.play_equalized_audio:
-                        self.stream.write(chunk_equalized.astype(np.int16).tobytes())
-                if self.play_audio:
-                    self.stream.write(chunk.astype(np.int16).tobytes())
+                    # if self.play_equalized_audio:
+                    #     # self.c += 1
+                    #     self.audio_file = f"temp_audio{chunk_equalized}.wav"
+                    #     # if chunk_equalized != 1:#
+                    #     #     os.remove(f"temp_audio{chunk_equalized-1}.wav")
+
+                    #     # real_signal = np.real(self.time_domain_signal_modified)
+                    #     sf.write(self.audio_file, chunk_equalized.astype(np.int16).tobytes(), self.fs)
+                    #     self.player.pause()
+                # if self.play_audio:
+                #     self.player.play()
+                    # self.stream.write(chunk.astype(np.int16).tobytes())
                 self.index += self.chunk_size
 
         else:
             # Stop the timer and audio stream when the end of the file is reached
             self.timer.stop()
-            if mode == "Musical Mode" or mode == "Uniform Mode" or mode == "Animal Mode":
-                self.stream.stop_stream()
-                self.stream.close()
-                self.audio_stream.terminate()
+            # if mode == "Musical Mode" or mode == "Uniform Mode" or mode == "Animal Mode":
+            #     self.stream.stop_stream()
+            #     self.stream.close()
+            #     self.audio_stream.terminate()
                 
 
     def update_instrument(self, instrument):
@@ -496,11 +516,17 @@ class Equilizer(QMainWindow):
         if btn == "equalized_btn":
             self.play_equalized_audio = not self.play_equalized_audio
             self.play_audio = False
+            print(self.audio_file)
+            self.player.setMedia(QMediaContent(QUrl.fromLocalFile(self.audio_file)))
+            self.player.play()
         else:
             self.play_audio = not self.play_audio
             self.play_equalized_audio = False
+            self.player.setMedia(QMediaContent(QUrl.fromLocalFile(self.file_name)))
+            self.player.play()
 
     def update_ecg_slider(self):
+        
         slider_values = {
             "vf": self.ecg_sliders["vf"].value() / 130,  # normalized scale [0, 1]
             "mi": self.ecg_sliders["mi"].value() / 130,    
@@ -562,6 +588,7 @@ class Equilizer(QMainWindow):
         fft_result = np.fft.fft(self.equalized_signal)
         frequencies = np.fft.fftfreq(len(fft_result), dt)
         fft_magnitude = np.abs(fft_result)
+        self.phases = np.angle(fft_result)
 
         # take the positive half of frequencies and magnitudes
         self.positive_freqs = frequencies[: len(frequencies) // 2 ]
@@ -627,6 +654,62 @@ class Equilizer(QMainWindow):
         # clear the previous graph and plot updated graph
         self.ui.frequency_graphics_view.clear()
         self.ui.frequency_graphics_view.plot(frequencies_array, magnitude_array)
+        
+        
+        self.phases = np.ravel(np.array(self.phases))
+        self.phases = self.phases[:min_length]
+
+        # Apply scaling to magnitude_array
+        magnitude_array *= 100  # Multiply each element by 100
+
+        # Check the magnitude before inverse FFT
+        print(np.max(np.abs(magnitude_array)))  # Check if the magnitude is too small or too large
+
+        # Inverse Fourier transform
+        self.time_domain_signal_modified = np.fft.ifft(magnitude_array * np.exp(1j * self.phases))
+
+        # Take real part of the signal
+        real_signal = np.real(self.time_domain_signal_modified)
+
+        # Normalize the signal if necessary to prevent clipping
+        real_signal /= np.max(np.abs(real_signal))  # Normalize between -1 and 1
+
+        # Debugging: Check real_signal properties
+        print(f"Max value of real_signal: {np.max(np.abs(real_signal))}")
+        if np.max(np.abs(real_signal)) == 0:
+            print("Warning: Signal is empty or contains only zeros.")
+
+        # Handle the previous file safely
+        previous_audio_file = f"temp_audio{self.c-1}.wav"
+        if os.path.exists(previous_audio_file):
+            print(f"Removing existing file: {previous_audio_file}")
+            os.remove(previous_audio_file)
+
+        # Create a temporary file for the output
+        self.audio_file = tempfile.mktemp(suffix=".wav")
+
+        # Debug output
+        print(f"Writing to file: {self.audio_file}")
+
+        # Write the audio file
+        try:
+            sf.write(self.audio_file, real_signal.astype(np.float32), self.fs)
+            print(f"Audio file written successfully: {self.audio_file}")
+        except Exception as e:
+            print(f"Error writing audio file: {e}")
+
+        # Optionally, check the written file
+        try:
+            loaded_signal, _ = sf.read(self.audio_file)
+            print(f"Loaded signal max value: {np.max(np.abs(loaded_signal))}")
+        except Exception as e:
+            print(f"Error reading audio file after write: {e}")
+
+        # Play audio if required
+        if self.play_equalized_audio:
+            self.player.setMedia(QMediaContent(QUrl.fromLocalFile(self.audio_file)))
+            self.player.play()
+
 
 
 
