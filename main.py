@@ -54,7 +54,7 @@ class Equilizer(QMainWindow):
         self.equalized_signal = None  # To store modified signal
         
         # modes Combobox
-        self.ui.mode_comboBox.currentTextChanged.connect(self.replay)
+        # self.ui.mode_comboBox.currentTextChanged.connect(self.replay)
         self.file_name = None
 
         # button functions
@@ -72,14 +72,14 @@ class Equilizer(QMainWindow):
         self.player = QMediaPlayer()
         self.play_equalized_audio = False
         self.play_audio = False
-        self.data = None  # Holds the audio data
+        self.data = np.array([])  # Holds the audio data
         self.index = 0
         self.chunk_size = 3000
         self.ui.pushButton_12.setIcon(QIcon(f'icons/icons/drums2.png'))
-        self.ui.Violin_slider.setRange(1, 100)
-        self.ui.guitar_slider.setRange(1, 100)
-        self.ui.drums_slider.setRange(1, 100)
-        self.ui.Saxophone_slider.setRange(1, 100)
+        # self.ui.Violin_slider.setRange(1, 100)
+        # self.ui.guitar_slider.setRange(1, 100)
+        # self.ui.drums_slider.setRange(1, 100)
+        # self.ui.Saxophone_slider.setRange(1, 100)
         self.ui.guitar_slider.valueChanged.connect(
             lambda: self.update_instrument("Guitar")
         )
@@ -131,12 +131,12 @@ class Equilizer(QMainWindow):
         "elephant": (0, 800),    
         "frog": (1600, 2400),      
 }
-        self.ui.wolf_slider.setRange(1,100)
-        self.ui.horse_slider.setRange(1,100)
-        self.ui.cow_slider.setRange(1,100)
-        self.ui.dolphin_slider.setRange(1,100)
-        self.ui.elephant_slider.setRange(1,100)
-        self.ui.frog_slider.setRange(1,100)
+        # self.ui.wolf_slider.setRange(1,100)
+        # self.ui.horse_slider.setRange(1,100)
+        # self.ui.cow_slider.setRange(1,100)
+        # self.ui.dolphin_slider.setRange(1,100)
+        # self.ui.elephant_slider.setRange(1,100)
+        # self.ui.frog_slider.setRange(1,100)
         self.ui.wolf_slider.valueChanged.connect(lambda: self.update_animal("wolf"))
         self.ui.horse_slider.valueChanged.connect(lambda: self.update_animal("horse"))
         self.ui.cow_slider.valueChanged.connect(lambda: self.update_animal("cow"))
@@ -216,10 +216,6 @@ class Equilizer(QMainWindow):
 
         }
 
-        # Set initial values
-        self.ui.vf_arrhythmia_slider.setValue(0)
-        self.ui.mi_arrhythmia_slider.setValue(0)
-        self.ui.sr_arrhythmia_slider.setValue(0)
 
         for slider in self.ecg_sliders.values():
             slider.valueChanged.connect(self.update_ecg_slider)
@@ -292,7 +288,7 @@ class Equilizer(QMainWindow):
     def stop(self):
             # self.stream.close()
             self.timer.stop()
-            self.data = None
+            self.data = np.array([])
             # self.audio_stream.terminate()
             self.is_timer_running = False
             self.state = False
@@ -392,17 +388,17 @@ class Equilizer(QMainWindow):
          # Reset the sliders to their initial values
 
         #animal mode
-        self.ui.wolf_slider.setValue(1)
-        self.ui.horse_slider.setValue(1)
-        self.ui.cow_slider.setValue(1)
-        self.ui.dolphin_slider.setValue(1)
-        self.ui.elephant_slider.setValue(1)
-        self.ui.frog_slider.setValue(1)
+        self.ui.wolf_slider.setValue(100)
+        self.ui.horse_slider.setValue(100)
+        self.ui.cow_slider.setValue(100)
+        self.ui.dolphin_slider.setValue(100)
+        self.ui.elephant_slider.setValue(100)
+        self.ui.frog_slider.setValue(100)
 
         #ecg mode
-        self.ui.vf_arrhythmia_slider.setValue(0)
-        self.ui.mi_arrhythmia_slider.setValue(0)
-        self.ui.sr_arrhythmia_slider.setValue(0)
+        self.ui.vf_arrhythmia_slider.setValue(100)
+        self.ui.mi_arrhythmia_slider.setValue(100)
+        self.ui.sr_arrhythmia_slider.setValue(100)
 
         #uniform mode
         self.ui.uniform_slider_1.setValue(100)
@@ -417,10 +413,10 @@ class Equilizer(QMainWindow):
         self.ui.uniform_slider_10.setValue(100)
 
         #musical mode
-        self.ui.guitar_slider.setValue(1)
-        self.ui.Violin_slider.setValue(1)
-        self.ui.drums_slider.setValue(1)
-        self.ui.Saxophone_slider.setValue(1)
+        self.ui.guitar_slider.setValue(100)
+        self.ui.Violin_slider.setValue(100)
+        self.ui.drums_slider.setValue(100)
+        self.ui.Saxophone_slider.setValue(100)
 
 
     def set_home_view(self):
@@ -540,13 +536,17 @@ class Equilizer(QMainWindow):
             self.ui.equalized_graphics_view.plot(
                 self.data[: self.chunk_size], clear=True
             )
+        if self.data.ndim > 1:
+            self.data = self.data.flatten()     
 
 
 
     def update_plot(self):
+        if not self.data.any():
+            return
         mode = self.ui.mode_comboBox.currentText()
-        if self.data.ndim > 1:
-            self.data = self.data.flatten() 
+        # if self.data.ndim > 1:
+        #     self.data = self.data.flatten() 
         if mode == "ECG Mode":
             return
 
@@ -596,11 +596,19 @@ class Equilizer(QMainWindow):
                 # if self.play_audio:
                 #     self.player.play()
                     # self.stream.write(chunk.astype(np.int16).tobytes())
+                if self.play_equalized_audio or self.play_audio:
+                    if self.player.state() != QMediaPlayer.PlayingState:
+                        self.player.play()
+                else:
+                    self.player.pause() 
+                            
                 self.index += self.chunk_size
 
         else:
             # Stop the timer and audio stream when the end of the file is reached
             self.timer.stop()
+            if self.play_equalized_audio or self.play_audio:
+                self.player.stop()
             # if mode == "Musical Mode" or mode == "Uniform Mode" or mode == "Animal Mode":
             #     self.stream.stop_stream()
             #     self.stream.close()
@@ -608,15 +616,17 @@ class Equilizer(QMainWindow):
                 
 
     def update_instrument(self, instrument):
+        if not self.data.any():
+            return
         self.equalized_signal = np.zeros_like(self.data, dtype=np.float32)
         if instrument=="Guitar":
             print("Guitar")
         elif instrument=="Violin":
-             print("Violin")
+            print("Violin")
         elif instrument=="Drums":
-              print("Drums")
+            print("Drums")
         elif instrument=="Saxophone":
-             print("Saxophone")
+            print("Saxophone")
 
         # Sum up the filtered signals with their respective slider values
         for inst, _ in self.instruments.items():
@@ -628,6 +638,8 @@ class Equilizer(QMainWindow):
         self.plot_frequency_graph()
 
     def update_animal(self, animal):
+        if not self.data.any():
+            return
         slider_value = self.animal_sliders[animal].value() / 100
         self.equalized_signal = np.zeros_like(self.data, dtype=np.float32)
         
@@ -640,29 +652,32 @@ class Equilizer(QMainWindow):
         self.plot_frequency_graph()
 
     def control_sound(self, btn):
+        if not self.data.any():
+            return
         if btn == "equalized_btn":
             self.play_equalized_audio = not self.play_equalized_audio
             self.play_audio = False
             print(self.audio_file)
             self.player.setMedia(QMediaContent(QUrl.fromLocalFile(self.audio_file)))
-            self.player.play()
+
         else:
             self.play_audio = not self.play_audio
             self.play_equalized_audio = False
             self.player.setMedia(QMediaContent(QUrl.fromLocalFile(self.file_name)))
-            self.player.play()
+
 
     def update_ecg_slider(self):
-        
+        if not self.data.any():
+            return
         slider_values = {
-            "vf": self.ecg_sliders["vf"].value() / 130,  # normalized scale [0, 1]
-            "mi": self.ecg_sliders["mi"].value() / 130,    
-            "sr": self.ecg_sliders["sr"].value() / 130,    
+            "vf": self.ecg_sliders["vf"].value() / 100,  # normalized scale [0, 2]
+            "mi": self.ecg_sliders["mi"].value() / 100,    
+            "sr": self.ecg_sliders["sr"].value() / 100,    
         }
 
         equalized_signal_base = self.data.astype(np.float32)
         self.equalized_signal = equalized_signal_base.copy() 
-       
+    
         # Plot the updated equalized signal
         for key, value in slider_values.items():
             if key in self.filtered_data:
@@ -690,6 +705,8 @@ class Equilizer(QMainWindow):
         self.plot_frequency_graph()
 
     def update_uniform_slider(self):
+        if not self.data.any():
+            return
         sender_slider = self.sender()
         slider_value = sender_slider.value()
         print(sender_slider)
@@ -725,6 +742,8 @@ class Equilizer(QMainWindow):
 
     
     def plot_frequency_graph(self):
+        if not self.data.any():
+            return
         self.magnitude = self.original_magnitude.copy()
         self.positive_magnitude = np.zeros_like(self.magnitude)
         
@@ -776,7 +795,7 @@ class Equilizer(QMainWindow):
         magnitude_array = magnitude_array[:min_length]
 
         # frequency graph limits
-        self.ui.frequency_graphics_view.setLimits(yMin = np.min(magnitude_array), yMax = np.max(magnitude_array) + 1)
+        self.ui.frequency_graphics_view.setLimits(yMin = np.min(magnitude_array), yMax = 2.2)
                 
         # clear the previous graph and plot updated graph
         self.ui.frequency_graphics_view.clear()
@@ -838,7 +857,7 @@ class Equilizer(QMainWindow):
         # Play audio if required
         if self.play_equalized_audio:
             self.player.setMedia(QMediaContent(QUrl.fromLocalFile(self.audio_file)))
-            self.player.play()
+            # self.player.play()
 
         else:
             # Use the audiogram scale (logarithmic) if toggled
