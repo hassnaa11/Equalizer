@@ -76,10 +76,10 @@ class Equilizer(QMainWindow):
         self.index = 0
         self.chunk_size = 3000
         self.ui.pushButton_12.setIcon(QIcon(f'icons/icons/drums2.png'))
-        self.ui.Violin_slider.setRange(1, 100)
-        self.ui.guitar_slider.setRange(1, 100)
-        self.ui.drums_slider.setRange(1, 100)
-        self.ui.Saxophone_slider.setRange(1, 100)
+        self.ui.Violin_slider.setRange(1, 200)
+        self.ui.guitar_slider.setRange(1, 200)
+        self.ui.drums_slider.setRange(1, 200)
+        self.ui.Saxophone_slider.setRange(1, 200)
         self.ui.guitar_slider.valueChanged.connect(
             lambda: self.update_instrument("Guitar")
         )
@@ -290,14 +290,17 @@ class Equilizer(QMainWindow):
             self.ui.equalized_graphics_view.setYRange(*new_y_range)
 
     def stop(self):
-            self.stream.close()
+            # self.stream.close()
             self.timer.stop()
             self.data = None
-            self.audio_stream.terminate()
+            # self.audio_stream.terminate()
             self.is_timer_running = False
             self.state = False
             self.index = 0
             self.ui.play_pause_btn.setIcon(QIcon(f'icons/icons/play copy.svg')) 
+            self.player.stop()
+            self.play_audio = False
+            self.play_equalized_audio = False
             self.original_spectrogram_viewer.clear_spectrogram()
             self.equalized_spectrogram_viewer.clear_spectrogram()
             self.ui.frequency_graphics_view.clear()
@@ -362,15 +365,22 @@ class Equilizer(QMainWindow):
         if self.is_timer_running:
             self.ui.play_pause_btn.setIcon(QIcon(f'icons/icons/play copy.svg'))
             self.timer.stop()
+            self.player.pause()
         else:
             self.ui.play_pause_btn.setIcon(QIcon(f'icons/icons/pause copy.svg'))
             self.timer.start(50)
+            self.player.play()
         self.is_timer_running = not self.is_timer_running
+        self.play_audio = not self.play_audio
+        self.play_equalized_audio = not self.play_equalized_audio
 
     def replay(self):
         
         self.is_timer_running = False
-        # self.index = 0
+        self.index = 0
+        self.player.stop()
+        self.play_audio = False
+        self.play_equalized_audio = False
         self.on_mode_change()
         self.ui.play_pause_btn.setIcon(QIcon(f'icons/icons/pause copy.svg'))
         self.reset_sliders()    
@@ -437,6 +447,7 @@ class Equilizer(QMainWindow):
             self.ecg_mode_selected = False
 
     def open_file(self):
+        self.reset_sliders()
         self.file_name, _ = QFileDialog.getOpenFileName(
             self, "Open WAV", "", "WAV Files (*.wav);;All Files (*)"
         )
@@ -453,6 +464,8 @@ class Equilizer(QMainWindow):
 
     def plot_original_data(self):
         self.fs, self.data = wav.read(self.file_name)  # Read the WAV file
+        if self.data.ndim > 1:
+            self.data = self.data.flatten() 
         # self.fs = 22050
         print(f"Sample rate of the file: {self.fs}")
 
@@ -471,7 +484,23 @@ class Equilizer(QMainWindow):
         self.plot_frequency_graph()
         if len(self.data.shape) > 1:
             self.data = self.data[:, 0]
-        self.ui.original_graphics_view.plot(self.data[: self.chunk_size], clear=True)
+        self.cumulative_time = []  # To store all time values
+        self.cumulative_data = []  # To store all signal values
+        self.index = 0  # Initialize index
+
+        # Initial plot with the first chunk
+        chunk = self.data[: self.chunk_size]
+        time_chunk = np.arange(0, len(chunk)) / self.fs
+        self.cumulative_time.extend(time_chunk)
+        self.cumulative_data.extend(chunk)
+
+        self.cumulative_equalized_time = []  # To store time values for the equalized signal
+        self.cumulative_equalized_data = []  # To store equalized signal values
+        
+
+
+        
+
         if mode == "Uniform Mode":
             self.original_spectrogram_viewer.update_spectrogram(self.data[: self.chunk_size], mode = "Uniform Mode")
         elif mode == "Musical Mode":
@@ -481,14 +510,15 @@ class Equilizer(QMainWindow):
     
         if mode == "ECG Mode":
             # print("Displaying ECG data in static mode")
-            self.ui.original_graphics_view.plot(self.data, clear=True)
+            self.ui.original_graphics_view.plot(time_chunk, chunk, clear=True)
             self.original_spectrogram_viewer.update_spectrogram(self.data, mode = "ECG Mode")
             self.filtered_data = {}
             for band_number, (low, high) in self.ecg_ranges.items():
                 self.filtered_data[band_number] = bandpass_filter(
                     self.data, low, high, self.fs
                 )
-            self.ui.equalized_graphics_view.plot(self.data, clear=True)  
+
+            self.ui.equalized_graphics_view.plot(time_chunk, chunk, clear=True) 
             self.equalized_spectrogram_viewer.update_spectrogram(self.data, mode = "ECG Mode")
 
 
@@ -498,7 +528,7 @@ class Equilizer(QMainWindow):
             #     format=pyaudio.paInt16, channels=1, rate=self.fs, output=True
             # )
             
-            
+            self.ui.original_graphics_view.plot(self.cumulative_time, self.cumulative_data, clear=True)
             self.filtered_data = {}
             if mode == "Musical Mode":
                 for instrument, (low, high) in self.instruments.items():
@@ -524,14 +554,26 @@ class Equilizer(QMainWindow):
                 self.equalized_spectrogram_viewer.update_spectrogram(self.data[: self.chunk_size], mode == "Animal Mode")
 
 
-            self.ui.equalized_graphics_view.plot(
-                self.data[: self.chunk_size], clear=True
-            )
+            self.ui.equalized_graphics_view.plot(self.cumulative_time, self.cumulative_data,clear=True)
 
 
 
     def update_plot(self):
         mode = self.ui.mode_comboBox.currentText()
+        chunk = self.data[self.index : self.index + self.chunk_size]
+        time_chunk = np.arange(self.index, self.index + self.chunk_size) / self.fs
+
+        # Append new chunk to cumulative data
+        self.cumulative_time.extend(time_chunk)
+        self.cumulative_data.extend(chunk)
+
+
+        
+
+        # Plot original data with time axis
+        
+        if self.data.ndim > 1:
+            self.data = self.data.flatten() 
         if mode == "ECG Mode":
             return
 
@@ -545,9 +587,10 @@ class Equilizer(QMainWindow):
                 else:
                     self.original_spectrogram_viewer.update_spectrogram(chunk, mode = "Uniform Mode")
 
-                self.ui.original_graphics_view.plot(chunk, clear=True)
+                 # Plot cumulative data
+                self.ui.original_graphics_view.plot(self.cumulative_time, self.cumulative_data, clear=True)
                 if self.state == False:
-                    self.ui.equalized_graphics_view.plot(chunk, clear=True)
+                    self.ui.equalized_graphics_view.plot(self.cumulative_time, self.cumulative_data, clear=True)
 
                     if mode == "Musical Mode":
                         self.equalized_spectrogram_viewer.update_spectrogram(chunk, mode = "Musical Mode")
@@ -560,7 +603,14 @@ class Equilizer(QMainWindow):
                     chunk_equalized = self.equalized_signal[
                         self.index : self.index + self.chunk_size
                     ]
-                    self.ui.equalized_graphics_view.plot(chunk_equalized, clear=True)
+                    time_chunk_equalized = np.arange(self.index, self.index + self.chunk_size) / self.fs
+                    self.cumulative_equalized_time.extend(time_chunk_equalized)
+                    self.cumulative_equalized_data.extend(chunk_equalized)
+
+                    # Plot cumulative equalized signal
+                    self.ui.equalized_graphics_view.plot(
+                        self.cumulative_equalized_time, self.cumulative_equalized_data, clear=True
+                    )
 
                     if mode == "Musical Mode":
                         self.equalized_spectrogram_viewer.update_spectrogram(chunk_equalized, mode = "Musical Mode")
@@ -775,7 +825,7 @@ class Equilizer(QMainWindow):
         self.phases = self.phases[:min_length]
 
         # Apply scaling to magnitude_array
-        magnitude_array *= 100  # Multiply each element by 100
+        # magnitude_array *= 100  # Multiply each element by 100
 
         # Check the magnitude before inverse FFT
         print(np.max(np.abs(magnitude_array)))  # Check if the magnitude is too small or too large
