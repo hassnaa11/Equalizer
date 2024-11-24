@@ -12,6 +12,13 @@ import pyaudio
 # from arrhythmia_handler import detect_arrhythmias, apply_slider_changes
 from Spectrogram import SpectrogramViewer
 import scipy.signal
+from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
+from PyQt5.QtCore import QUrl
+import numpy as np, bisect, librosa, soundfile as sf
+import os
+import tempfile
+temp_audio_file = tempfile.mktemp(suffix=".wav")
+# self.audio_file = tempfile.mktemp(suffix=".wav")
 
 
 def bandpass_filter(data, lowcut, highcut, fs, order=5):
@@ -52,20 +59,23 @@ class Equilizer(QMainWindow):
 
         # button functions
         self.ui.play_pause_btn.clicked.connect(self.play_pause)
-        self.ui.show_hide_btn.clicked.connect(self.toggle_spectrogram_visibility)
-        self.ui.replay_btn.clicked.connect(self.on_mode_change)
+        # self.ui.show_hide_btn.clicked.connect(self.toggle_spectrogram_visibility)
+        self.ui.replay_btn.clicked.connect(self.replay)
 
         # musical mode
         self.timer = QTimer(self)
+        self.timer.setInterval(100)
         self.state = False
         self.timer.timeout.connect(self.update_plot)
         self.is_timer_running = False
         self.audio_stream = None
+        self.player = QMediaPlayer()
         self.play_equalized_audio = False
         self.play_audio = False
         self.data = None  # Holds the audio data
         self.index = 0
         self.chunk_size = 3000
+        self.ui.pushButton_12.setIcon(QIcon(f'icons/icons/drums2.png'))
         self.ui.Violin_slider.setRange(1, 100)
         self.ui.guitar_slider.setRange(1, 100)
         self.ui.drums_slider.setRange(1, 100)
@@ -96,10 +106,10 @@ class Equilizer(QMainWindow):
             "Violin": self.ui.Violin_slider,
         }
         self.instruments = {
-               "Guitar": (80,  1200),
-            "Violin": (1200, 3500),
-            "Drums": (3500,5000),
-            "Saxophone": (5000,10000),
+            "Guitar": (80, 1500),
+            "Violin": (1500, 3000),
+            "Drums": (3000, 5000),
+            "Saxophone": (5000,8000),
             
         }
         # end of music
@@ -242,6 +252,8 @@ class Equilizer(QMainWindow):
         self.ui.zoom_in_btn.clicked.connect(self.zoom_in)
         self.ui.zoom_out_btn.clicked.connect(self.zoom_out)
         self.ui.stop_btn.clicked.connect(self.stop)
+        
+        self.c = 0
 
     def zoom_in(self):
             x_range, y_range = self.ui.original_graphics_view.viewRange()
@@ -278,15 +290,21 @@ class Equilizer(QMainWindow):
             self.ui.equalized_graphics_view.setYRange(*new_y_range)
 
     def stop(self):
+            self.stream.close()
             self.timer.stop()
+            self.data = None
+            self.audio_stream.terminate()
             self.is_timer_running = False
-
+            self.state = False
+            self.index = 0
+            self.ui.play_pause_btn.setIcon(QIcon(f'icons/icons/play copy.svg')) 
+            self.original_spectrogram_viewer.clear_spectrogram()
+            self.equalized_spectrogram_viewer.clear_spectrogram()
+            self.ui.frequency_graphics_view.clear()
             self.ui.original_graphics_view.clear()
             self.ui.equalized_graphics_view.clear()
-            self.ui.equalized_spectro_graphics_view.clear()
-            self.ui.original_spectro_graphics_view.clear()
-            self.ui.frequency_graphics_view.clear()
-
+            self.reset_sliders()
+           
 
     def adjust_playback_speed(self):
         speed = self.ui.speed_slider.value()
@@ -307,7 +325,8 @@ class Equilizer(QMainWindow):
             self.ui.reset_view_btn.setText("Linear")  
         
         self.plot_frequency_graph()
-
+        self.c = 0
+        self.phases = []
 
     def toggle_spectrogram_visibility(self):
         if self.show_spectrograms:
@@ -315,11 +334,15 @@ class Equilizer(QMainWindow):
             self.ui.equalized_spectro_frame.hide()
             self.ui.original_spectro_graphics_view.hide()
             self.ui.equalized_spectro_graphics_view.hide()
+            self.original_spectrogram_viewer.close_spectrogram()
+            self.equalized_spectrogram_viewer.close_spectrogram()
         else:
             self.ui.original_spectro_frame.show()
             self.ui.equalized_spectro_frame.show()
             self.ui.original_spectro_graphics_view.show()
             self.ui.equalized_spectro_graphics_view.show()
+            self.original_spectrogram_viewer.show_spectrogram()
+            self.equalized_spectrogram_viewer.show_spectrogram()
 
         self.show_spectrograms = not self.show_spectrograms
 
@@ -331,21 +354,9 @@ class Equilizer(QMainWindow):
             self.plot_original_data()
             self.index = 0
             self.state = False
-            self.timer.start(20)  
+            self.timer.start()  
             self.is_timer_running = True  
-            
-
-    def replay(self):
-        
-        self.ui.wolf_slider.setValue(1)
-        self.ui.horse_slider.setValue(1)
-        self.ui.cow_slider.setValue(1)
-        self.ui.dolphin_slider.setValue(1)
-        self.ui.elephant_slider.setValue(1)
-        self.ui.frog_slider.setValue(1)
-
-        self.on_mode_change()
-        
+                  
 
     def play_pause(self):
         if self.is_timer_running:
@@ -353,9 +364,54 @@ class Equilizer(QMainWindow):
             self.timer.stop()
         else:
             self.ui.play_pause_btn.setIcon(QIcon(f'icons/icons/pause copy.svg'))
-            self.timer.start(20)
+            self.timer.start(50)
         self.is_timer_running = not self.is_timer_running
-       
+
+    def replay(self):
+        
+        self.is_timer_running = False
+        # self.index = 0
+        self.on_mode_change()
+        self.ui.play_pause_btn.setIcon(QIcon(f'icons/icons/pause copy.svg'))
+        self.reset_sliders()    
+        self.state = True
+        self.plot_frequency_graph() 
+        
+         
+    def reset_sliders(self):
+         # Reset the sliders to their initial values
+
+        #animal mode
+        self.ui.wolf_slider.setValue(1)
+        self.ui.horse_slider.setValue(1)
+        self.ui.cow_slider.setValue(1)
+        self.ui.dolphin_slider.setValue(1)
+        self.ui.elephant_slider.setValue(1)
+        self.ui.frog_slider.setValue(1)
+
+        #ecg mode
+        self.ui.vf_arrhythmia_slider.setValue(0)
+        self.ui.mi_arrhythmia_slider.setValue(0)
+        self.ui.sr_arrhythmia_slider.setValue(0)
+
+        #uniform mode
+        self.ui.uniform_slider_1.setValue(100)
+        self.ui.uniform_slider_2.setValue(100)
+        self.ui.uniform_slider_3.setValue(100)
+        self.ui.uniform_slider_4.setValue(100)
+        self.ui.uniform_slider_5.setValue(100)
+        self.ui.uniform_slider_6.setValue(100)
+        self.ui.uniform_slider_7.setValue(100)
+        self.ui.uniform_slider_8.setValue(100)
+        self.ui.uniform_slider_9.setValue(100)
+        self.ui.uniform_slider_10.setValue(100)
+
+        #musical mode
+        self.ui.guitar_slider.setValue(1)
+        self.ui.Violin_slider.setValue(1)
+        self.ui.drums_slider.setValue(1)
+        self.ui.Saxophone_slider.setValue(1)
+
 
     def set_home_view(self):
         if self.ecg_mode_selected:
@@ -384,16 +440,20 @@ class Equilizer(QMainWindow):
         self.file_name, _ = QFileDialog.getOpenFileName(
             self, "Open WAV", "", "WAV Files (*.wav);;All Files (*)"
         )
+        print("fileeeeeeeeee: ", self.file_name)
         if self.file_name:
             self.from_file = True
             self.plot_original_data()
             self.index = 0
             # self.play_audio=False
-            self.timer.start(50)
+            self.player.setMedia(QMediaContent(QUrl.fromLocalFile(self.file_name)))
+            # self.player.play()
+            self.timer.start()
             print(self.file_name)
 
     def plot_original_data(self):
         self.fs, self.data = wav.read(self.file_name)  # Read the WAV file
+        # self.fs = 22050
         print(f"Sample rate of the file: {self.fs}")
 
         mode = self.ui.mode_comboBox.currentText()
@@ -405,56 +465,132 @@ class Equilizer(QMainWindow):
             self.fs = target_fs
             print(f"Resampled to: {self.fs} Hz")
 
+
         self.equalized_signal = self.data
         self.calculate_initial_fft()
         self.plot_frequency_graph()
-
-        # Create a time array for plotting
-        time = np.linspace(0, len(self.data) / self.fs, len(self.data))
-
         if len(self.data.shape) > 1:
             self.data = self.data[:, 0]
-
-        # Plot the initial signal with time on x-axis
-        self.ui.original_graphics_view.plot(time[: self.chunk_size], self.data[: self.chunk_size], clear=True)
-        
-        # Update spectrogram based on mode
+        self.ui.original_graphics_view.plot(self.data[: self.chunk_size], clear=True)
         if mode == "Uniform Mode":
-            self.original_spectrogram_viewer.update_spectrogram(self.data[: self.chunk_size], mode="Uniform Mode")
+            self.original_spectrogram_viewer.update_spectrogram(self.data[: self.chunk_size], mode = "Uniform Mode")
         elif mode == "Musical Mode":
-            self.original_spectrogram_viewer.update_spectrogram(self.data[: self.chunk_size], mode="Musical Mode")
+            self.original_spectrogram_viewer.update_spectrogram(self.data[: self.chunk_size], mode = "Musical Mode")
         elif mode == "Animal Mode":
-            self.original_spectrogram_viewer.update_spectrogram(self.data[: self.chunk_size], mode="Animal Mode")
-        
+            self.original_spectrogram_viewer.update_spectrogram(self.data[: self.chunk_size], mode = "Animal Mode")
+    
         if mode == "ECG Mode":
-            self.ui.original_graphics_view.plot(time, self.data, clear=True)
-            self.original_spectrogram_viewer.update_spectrogram(self.data, mode="ECG Mode")
+            # print("Displaying ECG data in static mode")
+            self.ui.original_graphics_view.plot(self.data, clear=True)
+            self.original_spectrogram_viewer.update_spectrogram(self.data, mode = "ECG Mode")
             self.filtered_data = {}
             for band_number, (low, high) in self.ecg_ranges.items():
-                self.filtered_data[band_number] = bandpass_filter(self.data, low, high, self.fs)
-            self.ui.equalized_graphics_view.plot(time, self.data, clear=True)
-            self.equalized_spectrogram_viewer.update_spectrogram(self.data, mode="ECG Mode")
+                self.filtered_data[band_number] = bandpass_filter(
+                    self.data, low, high, self.fs
+                )
+            self.ui.equalized_graphics_view.plot(self.data, clear=True)  
+            self.equalized_spectrogram_viewer.update_spectrogram(self.data, mode = "ECG Mode")
 
-        # For other modes (Musical Mode, Uniform Mode, Animal Mode)
+
         if mode == "Musical Mode" or mode == "Uniform Mode" or mode == "Animal Mode":
-            self.audio_stream = pyaudio.PyAudio()
-            self.stream = self.audio_stream.open(format=pyaudio.paInt16, channels=1, rate=self.fs, output=True)
+            # self.audio_stream = pyaudio.PyAudio()
+            # self.stream = self.audio_stream.open(
+            #     format=pyaudio.paInt16, channels=1, rate=self.fs, output=True
+            # )
+            
+            
             self.filtered_data = {}
             if mode == "Musical Mode":
                 for instrument, (low, high) in self.instruments.items():
-                    self.filtered_data[instrument] = bandpass_filter(self.data, low, high, self.fs)
-                self.equalized_spectrogram_viewer.update_spectrogram(self.data[:self.chunk_size], mode="Musical Mode")
+                    self.filtered_data[instrument] = bandpass_filter(
+                        self.data, low, high, self.fs
+                    )
+                    print(self.filtered_data)
+                self.equalized_spectrogram_viewer.update_spectrogram(self.data[: self.chunk_size], mode = "Musical Mode")
+
             elif mode == "Uniform Mode":
                 for slider_number, (low, high) in self.uniform_ranges.items():
-                    self.filtered_data[slider_number] = bandpass_filter(self.data, low, high, self.fs)
-                self.equalized_spectrogram_viewer.update_spectrogram(self.data[:self.chunk_size], mode="Uniform Mode")
+                    self.filtered_data[slider_number] = bandpass_filter(
+                        self.data, low, high, self.fs
+                    )
+                    print(self.filtered_data)
+                self.equalized_spectrogram_viewer.update_spectrogram(self.data[: self.chunk_size], mode == "Uniform Mode")
             elif mode == "Animal Mode":
                 for animal, (low, high) in self.animal_ranges.items():
-                    self.filtered_data[animal] = bandpass_filter(self.data, low, high, self.fs)
-                self.equalized_spectrogram_viewer.update_spectrogram(self.data[:self.chunk_size], mode="Animal Mode")
-            
-            self.ui.equalized_graphics_view.plot(time[:self.chunk_size], self.data[:self.chunk_size], clear=True)
-            print(self.data.dtype)
+                    self.filtered_data[animal] = bandpass_filter(
+                        self.data, low, high, self.fs
+                    )
+                    print(self.filtered_data)
+                self.equalized_spectrogram_viewer.update_spectrogram(self.data[: self.chunk_size], mode == "Animal Mode")
+
+
+            self.ui.equalized_graphics_view.plot(
+                self.data[: self.chunk_size], clear=True
+            )
+
+
+
+    def update_plot(self):
+        mode = self.ui.mode_comboBox.currentText()
+        if mode == "ECG Mode":
+            return
+
+        if self.index + self.chunk_size <= len(self.data):
+            if mode == "Musical Mode" or mode == "Uniform Mode" or mode == "Animal Mode":
+                # Get the next chunk of the original data
+                chunk = self.data[self.index : self.index + self.chunk_size]
+
+                if mode == "Musical Mode":
+                    self.original_spectrogram_viewer.update_spectrogram(chunk, mode = "Musical Mode")
+                else:
+                    self.original_spectrogram_viewer.update_spectrogram(chunk, mode = "Uniform Mode")
+
+                self.ui.original_graphics_view.plot(chunk, clear=True)
+                if self.state == False:
+                    self.ui.equalized_graphics_view.plot(chunk, clear=True)
+
+                    if mode == "Musical Mode":
+                        self.equalized_spectrogram_viewer.update_spectrogram(chunk, mode = "Musical Mode")
+                    elif mode == "Animal Mode":
+                        self.equalized_spectrogram_viewer.update_spectrogram(chunk, mode = "Animal Mode")
+                    else:
+                        self.equalized_spectrogram_viewer.update_spectrogram(chunk, mode = "Uniform Mode")
+                    
+                else:
+                    chunk_equalized = self.equalized_signal[
+                        self.index : self.index + self.chunk_size
+                    ]
+                    self.ui.equalized_graphics_view.plot(chunk_equalized, clear=True)
+
+                    if mode == "Musical Mode":
+                        self.equalized_spectrogram_viewer.update_spectrogram(chunk_equalized, mode = "Musical Mode")
+                    elif mode == "Animal Mode":
+                        self.equalized_spectrogram_viewer.update_spectrogram(chunk_equalized, mode = "Animal Mode")
+                    else:
+                        self.equalized_spectrogram_viewer.update_spectrogram(chunk_equalized, mode = "Uniform Mode")
+
+                    # if self.play_equalized_audio:
+                    #     # self.c += 1
+                    #     self.audio_file = f"temp_audio{chunk_equalized}.wav"
+                    #     # if chunk_equalized != 1:#
+                    #     #     os.remove(f"temp_audio{chunk_equalized-1}.wav")
+
+                    #     # real_signal = np.real(self.time_domain_signal_modified)
+                    #     sf.write(self.audio_file, chunk_equalized.astype(np.int16).tobytes(), self.fs)
+                    #     self.player.pause()
+                # if self.play_audio:
+                #     self.player.play()
+                    # self.stream.write(chunk.astype(np.int16).tobytes())
+                self.index += self.chunk_size
+
+        else:
+            # Stop the timer and audio stream when the end of the file is reached
+            self.timer.stop()
+            # if mode == "Musical Mode" or mode == "Uniform Mode" or mode == "Animal Mode":
+            #     self.stream.stop_stream()
+            #     self.stream.close()
+            #     self.audio_stream.terminate()
+                
 
     def update_instrument(self, instrument):
         self.equalized_signal = np.zeros_like(self.data, dtype=np.float32)
@@ -492,11 +628,17 @@ class Equilizer(QMainWindow):
         if btn == "equalized_btn":
             self.play_equalized_audio = not self.play_equalized_audio
             self.play_audio = False
+            print(self.audio_file)
+            self.player.setMedia(QMediaContent(QUrl.fromLocalFile(self.audio_file)))
+            self.player.play()
         else:
             self.play_audio = not self.play_audio
             self.play_equalized_audio = False
+            self.player.setMedia(QMediaContent(QUrl.fromLocalFile(self.file_name)))
+            self.player.play()
 
     def update_ecg_slider(self):
+        
         slider_values = {
             "vf": self.ecg_sliders["vf"].value() / 130,  # normalized scale [0, 1]
             "mi": self.ecg_sliders["mi"].value() / 130,    
@@ -558,6 +700,7 @@ class Equilizer(QMainWindow):
         fft_result = np.fft.fft(self.equalized_signal)
         frequencies = np.fft.fftfreq(len(fft_result), dt)
         fft_magnitude = np.abs(fft_result)
+        self.phases = np.angle(fft_result)
 
         # take the positive half of frequencies and magnitudes
         self.positive_freqs = frequencies[: len(frequencies) // 2 ]
@@ -577,7 +720,7 @@ class Equilizer(QMainWindow):
             mode_ranges = self.uniform_ranges
 
         elif mode == "Musical Mode":
-            self.ui.frequency_graphics_view.setLimits(xMin = 80, xMax = 10000) 
+            self.ui.frequency_graphics_view.setLimits(xMin=80, xMax=7999)
             mode_sliders = self.sliders
             mode_ranges = self.instruments
 
@@ -626,6 +769,62 @@ class Equilizer(QMainWindow):
         # Plot in linear scale by default
         if not self.is_audiogram:
             self.ui.frequency_graphics_view.plot(frequencies_array, magnitude_array)
+        
+        
+        self.phases = np.ravel(np.array(self.phases))
+        self.phases = self.phases[:min_length]
+
+        # Apply scaling to magnitude_array
+        magnitude_array *= 100  # Multiply each element by 100
+
+        # Check the magnitude before inverse FFT
+        print(np.max(np.abs(magnitude_array)))  # Check if the magnitude is too small or too large
+
+        # Inverse Fourier transform
+        self.time_domain_signal_modified = np.fft.ifft(magnitude_array * np.exp(1j * self.phases))
+
+        # Take real part of the signal
+        real_signal = np.real(self.time_domain_signal_modified)
+
+        # Normalize the signal if necessary to prevent clipping
+        real_signal /= np.max(np.abs(real_signal))  # Normalize between -1 and 1
+
+        # Debugging: Check real_signal properties
+        print(f"Max value of real_signal: {np.max(np.abs(real_signal))}")
+        if np.max(np.abs(real_signal)) == 0:
+            print("Warning: Signal is empty or contains only zeros.")
+
+        # Handle the previous file safely
+        previous_audio_file = f"temp_audio{self.c-1}.wav"
+        if os.path.exists(previous_audio_file):
+            print(f"Removing existing file: {previous_audio_file}")
+            os.remove(previous_audio_file)
+
+        # Create a temporary file for the output
+        self.audio_file = tempfile.mktemp(suffix=".wav")
+
+        # Debug output
+        print(f"Writing to file: {self.audio_file}")
+
+        # Write the audio file
+        try:
+            sf.write(self.audio_file, real_signal.astype(np.float32), self.fs)
+            print(f"Audio file written successfully: {self.audio_file}")
+        except Exception as e:
+            print(f"Error writing audio file: {e}")
+
+        # Optionally, check the written file
+        try:
+            loaded_signal, _ = sf.read(self.audio_file)
+            print(f"Loaded signal max value: {np.max(np.abs(loaded_signal))}")
+        except Exception as e:
+            print(f"Error reading audio file after write: {e}")
+
+        # Play audio if required
+        if self.play_equalized_audio:
+            self.player.setMedia(QMediaContent(QUrl.fromLocalFile(self.audio_file)))
+            self.player.play()
+
         else:
             # Use the audiogram scale (logarithmic) if toggled
             self.plot_audiogram_scale(frequencies_array, magnitude_array)
@@ -640,7 +839,6 @@ class Equilizer(QMainWindow):
         
         # Plot the audiogram-scaled graph
         self.ui.frequency_graphics_view.plot(log_frequencies, magnitudes)
-
 
 
 if __name__ == "__main__":

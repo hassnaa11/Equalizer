@@ -37,7 +37,7 @@ class MplCanvas(Canvas):
             else:
                 y_min, y_max = 1050, 2100  
 
-            NFFT = 1300  # Larger FFT window size 1024
+            NFFT = 578  # Larger FFT window size 1024
             noverlap = 1000  # Increase overlap for smoother transitions 768
 
             self.axes.specgram(signal, Fs=fs, cmap='viridis', NFFT=NFFT, noverlap=noverlap)
