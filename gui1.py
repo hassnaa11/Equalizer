@@ -543,9 +543,9 @@ class Ui_MainWindow(object):
         self.speed_slider.setObjectName("speed_slider")
         self.horizontalLayout_2.addWidget(self.speed_slider)
         self.speed_slider.setMinimum(1)
-        self.speed_slider.setMaximum(6)
+        self.speed_slider.setMaximum(3)
         self.speed_slider.setSingleStep(1)
-        self.speed_slider.setValue(3)  # Default speed
+        self.speed_slider.setValue(1)  # Default speed
         self.speed_lcd = QtWidgets.QLCDNumber(self.controller_frame)
         self.speed_lcd.setObjectName("speed_lcd")
         self.horizontalLayout_2.addWidget(self.speed_lcd)

@@ -308,20 +308,23 @@ class Equilizer(QMainWindow):
     def adjust_playback_speed(self):
         speed = self.ui.speed_slider.value()
         base_interval = 50  # Original interval in ms (1x speed)
-        self.timer.setInterval(base_interval // speed)
-        print(f"Playback speed set to {speed}x, Timer interval: {self.timer.interval()} ms")
+        self.timer.setInterval(base_interval // speed)  # Adjust the timer interval
+        self.player.setPlaybackRate(speed)  # Adjust the playback speed of the audio
+        print(f"Playback speed set to {speed}x, Timer interval: {self.timer.interval()} ms, Audio playback rate: {self.player.playbackRate()}x")
+
 
 
     def toggle_scale(self):
         """
         Toggle between linear and audiogram scales.
         """
+        self.is_audiogram = not self.is_audiogram
         if self.is_audiogram:
-            self.is_audiogram = False
-            self.ui.reset_view_btn.setText("Audiogram")  
-        else:
-            self.is_audiogram = True
+            # self.is_audiogram = False
             self.ui.reset_view_btn.setText("Linear")  
+        else:
+            # self.is_audiogram = True
+            self.ui.reset_view_btn.setText("Audiogram")  
         
         self.plot_frequency_graph()
         self.c = 0
@@ -795,13 +798,15 @@ class Equilizer(QMainWindow):
         magnitude_array = magnitude_array[:min_length]
 
         # frequency graph limits
-        self.ui.frequency_graphics_view.setLimits(yMin = np.min(magnitude_array), yMax = 2.2)
+        self.ui.frequency_graphics_view.setLimits(yMin = np.min(magnitude_array), yMax = 4.1)
                 
         # clear the previous graph and plot updated graph
         self.ui.frequency_graphics_view.clear()
         # self.ui.frequency_graphics_view.plot(frequencies_array, magnitude_array)
         # Plot in linear scale by default
-        if not self.is_audiogram:
+        if self.is_audiogram:
+            self.plot_audiogram_scale(frequencies_array, magnitude_array)
+        else:
             self.ui.frequency_graphics_view.plot(frequencies_array, magnitude_array)
         
         
@@ -859,20 +864,36 @@ class Equilizer(QMainWindow):
             self.player.setMedia(QMediaContent(QUrl.fromLocalFile(self.audio_file)))
             # self.player.play()
 
-        else:
-            # Use the audiogram scale (logarithmic) if toggled
-            self.plot_audiogram_scale(frequencies_array, magnitude_array)
+        # else:
+        #     # Use the audiogram scale (logarithmic) if toggled
+        #     self.plot_audiogram_scale(frequencies_array, magnitude_array)
+
+        # if self.is_audiogram:
+        #     self.plot_audiogram_scale(frequencies_array, magnitude_array)
+        # else:
+        #     self.ui.frequency_graphics_view.plot(frequencies_array, magnitude_array)
 
 
     def plot_audiogram_scale(self, frequencies, magnitudes):
         """
-        Plots frequencies on an audiogram scale (logarithmic) for better analysis.
+        Plots frequencies on an audiogram scale (logarithmic).
         """
-        # Apply logarithmic scale for frequencies
-        log_frequencies = np.log10(frequencies + 1)  # Adding 1 to avoid log(0)
-        
-        # Plot the audiogram-scaled graph
-        self.ui.frequency_graphics_view.plot(log_frequencies, magnitudes)
+        if len(frequencies) == 0 or len(magnitudes) == 0:
+            print("No data to plot on audiogram scale.")
+            return
+
+        # Ensure frequencies are non-zero for log scale
+        frequencies = np.maximum(frequencies, 1e-9)
+
+        # Apply logarithmic transformation
+        log_frequencies = np.log10(frequencies)
+
+        # Clear and plot the audiogram
+        self.ui.frequency_graphics_view.plot(log_frequencies, magnitudes, pen='r')
+
+        # Debug output for verification
+        print(f"Plotted audiogram graph with {len(log_frequencies)} points.")
+
 
 
 if __name__ == "__main__":
