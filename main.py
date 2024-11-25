@@ -788,7 +788,10 @@ class Equilizer(QMainWindow):
         # normalize the magnitude
         self.original_magnitude = self.original_magnitude / np.max(self.original_magnitude)
 
+    
     def plot_frequency_graph(self):
+        if not self.data.any():
+            return
         self.magnitude = self.original_magnitude.copy()
         self.positive_magnitude = np.zeros_like(self.magnitude)
         
@@ -840,16 +843,19 @@ class Equilizer(QMainWindow):
         magnitude_array = magnitude_array[:min_length]
 
         # frequency graph limits
-        self.ui.frequency_graphics_view.setLimits(yMin = np.min(magnitude_array), yMax = np.max(magnitude_array) + 1)
+        self.ui.frequency_graphics_view.setLimits(yMin = np.min(magnitude_array), yMax = 4.1)
                 
         # clear the previous graph and plot updated graph
         self.ui.frequency_graphics_view.clear()
         # self.ui.frequency_graphics_view.plot(frequencies_array, magnitude_array)
         # Plot in linear scale by default
-        if not self.is_audiogram:
+        if self.is_audiogram:
+            self.plot_audiogram_scale(frequencies_array, magnitude_array)
+        else:
             self.ui.frequency_graphics_view.plot(frequencies_array, magnitude_array)
         
-        
+        if mode == "ECG Mode":
+            return
         self.phases = np.ravel(np.array(self.phases))
         self.phases = self.phases[:min_length]
 
@@ -902,179 +908,43 @@ class Equilizer(QMainWindow):
         # Play audio if required
         if self.play_equalized_audio:
             self.player.setMedia(QMediaContent(QUrl.fromLocalFile(self.audio_file)))
-            self.player.play()
+            # self.player.play()
 
-        else:
-            # Use the audiogram scale (logarithmic) if toggled
-            self.plot_audiogram_scale(frequencies_array, magnitude_array)
+        # else:
+        #     # Use the audiogram scale (logarithmic) if toggled
+        #     self.plot_audiogram_scale(frequencies_array, magnitude_array)
+
+        # if self.is_audiogram:
+        #     self.plot_audiogram_scale(frequencies_array, magnitude_array)
+        # else:
+        #     self.ui.frequency_graphics_view.plot(frequencies_array, magnitude_array)
 
 
     def plot_audiogram_scale(self, frequencies, magnitudes):
         """
-        Plots frequencies on an audiogram scale (logarithmic) for better analysis.
+        Plots frequencies on an audiogram scale (logarithmic).
         """
-        # Apply logarithmic scale for frequencies
-        log_frequencies = np.log10(frequencies + 1)  # Adding 1 to avoid log(0)
-        
-        # Plot the audiogram-scaled graph
+        mode = self.ui.mode_comboBox.currentText()
+        if len(frequencies) == 0 or len(magnitudes) == 0:
+            print("No data to plot on audiogram scale.")
+            return
+
+        # Ensure frequencies are non-zero for log scale
+        frequencies = np.maximum(frequencies, 1e-9)
+        if mode == "Uniform Mode":
+            self.ui.frequency_graphics_view.setLimits(xMin=2, xMax=4)
+        elif mode == "Musical Mode":
+            self.ui.frequency_graphics_view.setLimits(xMin=1, xMax=4)
+
+
+        # Apply logarithmic transformation
+        log_frequencies = np.log10(frequencies)
+
+        # Clear and plot the audiogram
         self.ui.frequency_graphics_view.plot(log_frequencies, magnitudes)
 
-    
-    # def plot_frequency_graph(self):
-    #     if not self.data.any():
-    #         return
-    #     self.magnitude = self.original_magnitude.copy()
-    #     self.positive_magnitude = np.zeros_like(self.magnitude)
-        
-    #     mode = self.ui.mode_comboBox.currentText()
-    #     if mode == "Uniform Mode":
-    #         self.ui.frequency_graphics_view.setLimits(xMin=1050, xMax=2100)
-    #         mode_sliders = self.uniform_sliders
-    #         mode_ranges = self.uniform_ranges
-
-    #     elif mode == "Musical Mode":
-    #         self.ui.frequency_graphics_view.setLimits(xMin=80, xMax=7999)
-    #         mode_sliders = self.sliders
-    #         mode_ranges = self.instruments
-
-    #     elif mode == "ECG Mode":
-    #         self.ui.frequency_graphics_view.setLimits(xMin=0, xMax=50, yMin=0, yMax=1)
-    #         mode_sliders = self.ecg_sliders
-    #         mode_ranges = self.ecg_ranges  
-            
-    #     elif mode == "Animal Mode":
-    #         self.ui.frequency_graphics_view.setLimits(xMin = 0, xMax = 5000) 
-    #         mode_sliders = self.animal_sliders
-    #         mode_ranges = self.animal_ranges
-
-    #     for slider_number, slider in mode_sliders.items():
-    #         slider_value = slider.value() / 100
-    #         low, high = mode_ranges[slider_number]
-
-    #         if mode == "Musical Mode":
-    #             low /= 2
-    #             high /= 2
-
-    #         # find indices corresponding to this slider's range
-    #         indices_in_range = np.where((self.positive_freqs >= low) & (self.positive_freqs < high))[0]
-
-    #         # apply maximum of the current value and the slider adjusted magnitude
-    #         self.positive_magnitude[indices_in_range] = np.maximum(
-    #             self.positive_magnitude[indices_in_range],
-    #             self.magnitude[indices_in_range] * slider_value
-    #         )
-
-    #     # make them 1D array
-    #     frequencies_array = np.ravel(np.array(self.positive_freqs))
-    #     magnitude_array = np.ravel(np.array(self.positive_magnitude))
-
-    #     # trim the arrays to be the same length
-    #     min_length = min(len(frequencies_array), len(magnitude_array))
-    #     frequencies_array = frequencies_array[:min_length]
-    #     magnitude_array = magnitude_array[:min_length]
-
-    #     # frequency graph limits
-    #     self.ui.frequency_graphics_view.setLimits(yMin = np.min(magnitude_array), yMax = 4.1)
-                
-    #     # clear the previous graph and plot updated graph
-    #     self.ui.frequency_graphics_view.clear()
-    #     # self.ui.frequency_graphics_view.plot(frequencies_array, magnitude_array)
-    #     # Plot in linear scale by default
-    #     if self.is_audiogram:
-    #         self.plot_audiogram_scale(frequencies_array, magnitude_array)
-    #     else:
-    #         self.ui.frequency_graphics_view.plot(frequencies_array, magnitude_array)
-        
-        
-    #     self.phases = np.ravel(np.array(self.phases))
-    #     self.phases = self.phases[:min_length]
-
-    #     # Apply scaling to magnitude_array
-    #     # magnitude_array *= 100  # Multiply each element by 100
-
-    #     # Check the magnitude before inverse FFT
-    #     print(np.max(np.abs(magnitude_array)))  # Check if the magnitude is too small or too large
-
-    #     # Inverse Fourier transform
-    #     self.time_domain_signal_modified = np.fft.ifft(magnitude_array * np.exp(1j * self.phases))
-
-    #     # Take real part of the signal
-    #     real_signal = np.real(self.time_domain_signal_modified)
-
-    #     # Normalize the signal if necessary to prevent clipping
-    #     real_signal /= np.max(np.abs(real_signal))  # Normalize between -1 and 1
-
-    #     # Debugging: Check real_signal properties
-    #     print(f"Max value of real_signal: {np.max(np.abs(real_signal))}")
-    #     if np.max(np.abs(real_signal)) == 0:
-    #         print("Warning: Signal is empty or contains only zeros.")
-
-    #     # Handle the previous file safely
-    #     previous_audio_file = f"temp_audio{self.c-1}.wav"
-    #     if os.path.exists(previous_audio_file):
-    #         print(f"Removing existing file: {previous_audio_file}")
-    #         os.remove(previous_audio_file)
-
-    #     # Create a temporary file for the output
-    #     self.audio_file = tempfile.mktemp(suffix=".wav")
-
-    #     # Debug output
-    #     print(f"Writing to file: {self.audio_file}")
-
-    #     # Write the audio file
-    #     try:
-    #         sf.write(self.audio_file, real_signal.astype(np.float32), self.fs)
-    #         print(f"Audio file written successfully: {self.audio_file}")
-    #     except Exception as e:
-    #         print(f"Error writing audio file: {e}")
-
-    #     # Optionally, check the written file
-    #     try:
-    #         loaded_signal, _ = sf.read(self.audio_file)
-    #         print(f"Loaded signal max value: {np.max(np.abs(loaded_signal))}")
-    #     except Exception as e:
-    #         print(f"Error reading audio file after write: {e}")
-
-    #     # Play audio if required
-    #     if self.play_equalized_audio:
-    #         self.player.setMedia(QMediaContent(QUrl.fromLocalFile(self.audio_file)))
-    #         # self.player.play()
-
-    #     # else:
-    #     #     # Use the audiogram scale (logarithmic) if toggled
-    #     #     self.plot_audiogram_scale(frequencies_array, magnitude_array)
-
-    #     # if self.is_audiogram:
-    #     #     self.plot_audiogram_scale(frequencies_array, magnitude_array)
-    #     # else:
-    #     #     self.ui.frequency_graphics_view.plot(frequencies_array, magnitude_array)
-
-
-    # def plot_audiogram_scale(self, frequencies, magnitudes):
-    #     """
-    #     Plots frequencies on an audiogram scale (logarithmic).
-    #     """
-    #     mode = self.ui.mode_comboBox.currentText()
-    #     if len(frequencies) == 0 or len(magnitudes) == 0:
-    #         print("No data to plot on audiogram scale.")
-    #         return
-
-    #     # Ensure frequencies are non-zero for log scale
-    #     frequencies = np.maximum(frequencies, 1e-9)
-    #     if mode == "Uniform Mode":
-    #         self.ui.frequency_graphics_view.setLimits(xMin=2, xMax=4)
-    #     elif mode == "Musical Mode":
-    #         self.ui.frequency_graphics_view.setLimits(xMin=1, xMax=4)
-
-
-    #     # Apply logarithmic transformation
-    #     log_frequencies = np.log10(frequencies)
-
-    #     # Clear and plot the audiogram
-    #     self.ui.frequency_graphics_view.plot(log_frequencies, magnitudes)
-
-    #     # Debug output for verification
-    #     print(f"Plotted audiogram graph with {len(log_frequencies)} points.")
+        # Debug output for verification
+        print(f"Plotted audiogram graph with {len(log_frequencies)} points.")
 
 
 
