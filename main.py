@@ -288,8 +288,8 @@ class Equilizer(QMainWindow):
     def stop(self):
             # self.stream.close()
             self.timer.stop()
-            self.data = np.array([])
-            # self.audio_stream.terminate()
+            self.data = None
+            self.audio_stream.terminate()
             self.is_timer_running = False
             self.state = False
             self.index = 0
@@ -464,7 +464,9 @@ class Equilizer(QMainWindow):
     def plot_original_data(self):
         self.fs, self.data = wav.read(self.file_name)  # Read the WAV file
         if self.data.ndim > 1:
-            self.data = self.data.flatten() 
+             self.data = self.data[:, 0]  # Use only the first channel
+
+
         # self.fs = 22050
         print(f"Sample rate of the file: {self.fs}")
 
@@ -481,9 +483,31 @@ class Equilizer(QMainWindow):
         self.equalized_signal = self.data
         self.calculate_initial_fft()
         self.plot_frequency_graph()
-        if len(self.data.shape) > 1:
-            self.data = self.data[:, 0]
-        self.ui.original_graphics_view.plot(self.data[: self.chunk_size], clear=True)
+        
+        self.cumulative_time = []  # Reset cumulative time
+        self.cumulative_data = []  # Reset cumulative data
+
+        chunk = self.data[: self.chunk_size]
+        time_chunk = np.arange(0, len(chunk)) / self.fs
+
+        # Validate chunk lengths
+        if len(chunk) != len(time_chunk):
+            print("Mismatch in chunk lengths")
+            return
+
+        self.cumulative_time.extend(time_chunk)
+        self.cumulative_data.extend(chunk)
+
+        self.ui.original_graphics_view.plot(self.cumulative_time, self.cumulative_data, clear=True)
+
+
+        self.cumulative_equalized_time = []  # To store time values for the equalized signal
+        self.cumulative_equalized_data = []  # To store equalized signal values
+        
+
+
+        
+
         if mode == "Uniform Mode":
             self.original_spectrogram_viewer.update_spectrogram(self.data[: self.chunk_size], mode = "Uniform Mode")
         elif mode == "Musical Mode":
@@ -493,14 +517,15 @@ class Equilizer(QMainWindow):
     
         if mode == "ECG Mode":
             # print("Displaying ECG data in static mode")
-            self.ui.original_graphics_view.plot(self.data, clear=True)
+            self.ui.original_graphics_view.plot(time_chunk, chunk, clear=True)
             self.original_spectrogram_viewer.update_spectrogram(self.data, mode = "ECG Mode")
             self.filtered_data = {}
             for band_number, (low, high) in self.ecg_ranges.items():
                 self.filtered_data[band_number] = bandpass_filter(
                     self.data, low, high, self.fs
                 )
-            self.ui.equalized_graphics_view.plot(self.data, clear=True)  
+
+            self.ui.equalized_graphics_view.plot(time_chunk, chunk, clear=True) 
             self.equalized_spectrogram_viewer.update_spectrogram(self.data, mode = "ECG Mode")
 
 
@@ -510,7 +535,7 @@ class Equilizer(QMainWindow):
             #     format=pyaudio.paInt16, channels=1, rate=self.fs, output=True
             # )
             
-            
+            self.ui.original_graphics_view.plot(self.cumulative_time, self.cumulative_data, clear=True)
             self.filtered_data = {}
             if mode == "Musical Mode":
                 for instrument, (low, high) in self.instruments.items():
@@ -536,20 +561,23 @@ class Equilizer(QMainWindow):
                 self.equalized_spectrogram_viewer.update_spectrogram(self.data[: self.chunk_size], mode == "Animal Mode")
 
 
-            self.ui.equalized_graphics_view.plot(
-                self.data[: self.chunk_size], clear=True
-            )
-        if self.data.ndim > 1:
-            self.data = self.data.flatten()     
+            self.ui.equalized_graphics_view.plot(self.cumulative_time, self.cumulative_data,clear=True)
 
 
 
     def update_plot(self):
         if not self.data.any():
             return
+      
+
         mode = self.ui.mode_comboBox.currentText()
-        # if self.data.ndim > 1:
-        #     self.data = self.data.flatten() 
+        chunk = self.data[self.index : self.index + self.chunk_size]
+        time_chunk = np.arange(self.index, self.index + self.chunk_size) / self.fs
+
+        # Append new chunk to cumulative data
+        self.cumulative_time.extend(time_chunk)
+        self.cumulative_data.extend(chunk)
+
         if mode == "ECG Mode":
             return
 
@@ -563,9 +591,10 @@ class Equilizer(QMainWindow):
                 else:
                     self.original_spectrogram_viewer.update_spectrogram(chunk, mode = "Uniform Mode")
 
-                self.ui.original_graphics_view.plot(chunk, clear=True)
+                 # Plot cumulative data
+                self.ui.original_graphics_view.plot(self.cumulative_time, self.cumulative_data, clear=True)
                 if self.state == False:
-                    self.ui.equalized_graphics_view.plot(chunk, clear=True)
+                    self.ui.equalized_graphics_view.plot(self.cumulative_time, self.cumulative_data, clear=True)
 
                     if mode == "Musical Mode":
                         self.equalized_spectrogram_viewer.update_spectrogram(chunk, mode = "Musical Mode")
@@ -578,7 +607,14 @@ class Equilizer(QMainWindow):
                     chunk_equalized = self.equalized_signal[
                         self.index : self.index + self.chunk_size
                     ]
-                    self.ui.equalized_graphics_view.plot(chunk_equalized, clear=True)
+                    time_chunk_equalized = np.arange(self.index, self.index + self.chunk_size) / self.fs
+                    self.cumulative_equalized_time.extend(time_chunk_equalized)
+                    self.cumulative_equalized_data.extend(chunk_equalized)
+
+                    # Plot cumulative equalized signal
+                    self.ui.equalized_graphics_view.plot(
+                        self.cumulative_equalized_time, self.cumulative_equalized_data, clear=True
+                    )
 
                     if mode == "Musical Mode":
                         self.equalized_spectrogram_viewer.update_spectrogram(chunk_equalized, mode = "Musical Mode")
