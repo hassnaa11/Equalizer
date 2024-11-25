@@ -889,7 +889,7 @@ class Equilizer(QMainWindow):
         log_frequencies = np.log10(frequencies)
 
         # Clear and plot the audiogram
-        self.ui.frequency_graphics_view.plot(log_frequencies, magnitudes, pen='r')
+        self.ui.frequency_graphics_view.plot(log_frequencies, magnitudes)
 
         # Debug output for verification
         print(f"Plotted audiogram graph with {len(log_frequencies)} points.")
