@@ -914,12 +914,18 @@ class Equilizer(QMainWindow):
         """
         Plots frequencies on an audiogram scale (logarithmic).
         """
+        mode = self.ui.mode_comboBox.currentText()
         if len(frequencies) == 0 or len(magnitudes) == 0:
             print("No data to plot on audiogram scale.")
             return
 
         # Ensure frequencies are non-zero for log scale
         frequencies = np.maximum(frequencies, 1e-9)
+        if mode == "Uniform Mode":
+            self.ui.frequency_graphics_view.setLimits(xMin=2, xMax=4)
+        elif mode == "Musical Mode":
+            self.ui.frequency_graphics_view.setLimits(xMin=1, xMax=4)
+
 
         # Apply logarithmic transformation
         log_frequencies = np.log10(frequencies)
