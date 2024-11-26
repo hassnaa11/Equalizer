@@ -9,7 +9,6 @@ from pathlib import Path
 import numpy as np
 import scipy.io.wavfile as wav
 import pyaudio
-# from arrhythmia_handler import detect_arrhythmias, apply_slider_changes
 from Spectrogram import SpectrogramViewer
 import scipy.signal
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
@@ -106,10 +105,15 @@ class Equilizer(QMainWindow):
             "Violin": self.ui.Violin_slider,
         }
         self.instruments = {
-            "Guitar": (80, 1500),
-            "Violin": (1500, 3000),
-            "Drums": (3000, 5000),
-            "Saxophone": (5000,8000),
+            # "Guitar": (80, 1500),
+            # "Violin": (1500, 3000),
+            # "Drums": (3000, 5000),
+            # "Saxophone": (5000,8000),
+            
+            "Guitar": (600, 1000),
+            "Violin": (1000, 2000),
+            "Drums": (0, 600),
+            "Saxophone": (2000,8000),
             
         }
         # end of music
@@ -398,7 +402,7 @@ class Equilizer(QMainWindow):
             self.timer.start()  
             self.is_timer_running = True 
         self.ui.play_pause_btn.setIcon(QIcon(f'icons/icons/pause copy.svg'))
-        self.reset_sliders()    
+        # self.reset_sliders()    
         self.state = True
         self.plot_frequency_graph() 
         
@@ -569,7 +573,6 @@ class Equilizer(QMainWindow):
 
             self.ui.equalized_graphics_view.plot(
                 self.data[: self.chunk_size], clear=True)
-
 
 
 
