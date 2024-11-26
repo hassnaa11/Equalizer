@@ -9,7 +9,6 @@ from pathlib import Path
 import numpy as np
 import scipy.io.wavfile as wav
 import pyaudio
-# from arrhythmia_handler import detect_arrhythmias, apply_slider_changes
 from Spectrogram import SpectrogramViewer
 import scipy.signal
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
@@ -106,30 +105,31 @@ class Equilizer(QMainWindow):
             "Violin": self.ui.Violin_slider,
         }
         self.instruments = {
-            "Guitar": (80, 1500),
-            "Violin": (1500, 3000),
-            "Drums": (3000, 5000),
-            "Saxophone": (5000,8000),
+            # "Guitar": (80, 1500),
+            # "Violin": (1500, 3000),
+            # "Drums": (3000, 5000),
+            # "Saxophone": (5000,8000),
+            
+            "Guitar": (600, 1000),
+            "Violin": (1000, 2000),
+            "Drums": (0, 600),
+            "Saxophone": (2000,8000),
             
         }
         # end of music
 
         # animal mode
         self.animal_sliders = {
+            "dog": self.ui.dog_slider,
             "wolf": self.ui.wolf_slider,
-            "horse": self.ui.horse_slider,
-            "cow": self.ui.cow_slider,
-            "dolphin": self.ui.dolphin_slider,
-            "elephant": self.ui.elephant_slider,
-            "frog": self.ui.frog_slider,
+            "falcon": self.ui.falcon_slider,
+            "bat": self.ui.bat_slider,
         }
-        self.animal_ranges = {
-        "wolf": (3200, 4000),        
-        "horse": (2400, 3200),      
-        "cow": (800,1600 ),         
-        "dolphin": (4000, 5000), 
-        "elephant": (0, 800),    
-        "frog": (1600, 2400),      
+        self.animal_ranges = { 
+            "dog": (0,400),
+            "wolf": (400, 800), 
+            "falcon": (800, 3000),
+            "bat": (3000, 9000),      
 }
         # self.ui.wolf_slider.setRange(1,100)
         # self.ui.horse_slider.setRange(1,100)
@@ -137,12 +137,16 @@ class Equilizer(QMainWindow):
         # self.ui.dolphin_slider.setRange(1,100)
         # self.ui.elephant_slider.setRange(1,100)
         # self.ui.frog_slider.setRange(1,100)
+
+        self.ui.pushButton_5.setIcon(QIcon(f'icons/icons/dog.png'))
+        self.ui.pushButton_6.setIcon(QIcon(f'icons/icons/bat.png'))
+        self.ui.pushButton_7.setIcon(QIcon(f'icons/icons/wolf.png'))
+        self.ui.pushButton_2.setIcon(QIcon(f'icons/icons/crow.png'))
+
         self.ui.wolf_slider.valueChanged.connect(lambda: self.update_animal("wolf"))
-        self.ui.horse_slider.valueChanged.connect(lambda: self.update_animal("horse"))
-        self.ui.cow_slider.valueChanged.connect(lambda: self.update_animal("cow"))
-        self.ui.dolphin_slider.valueChanged.connect(lambda: self.update_animal("dolphin"))
-        self.ui.elephant_slider.valueChanged.connect(lambda: self.update_animal("elephant"))
-        self.ui.frog_slider.valueChanged.connect(lambda: self.update_animal("frog"))
+        self.ui.bat_slider.valueChanged.connect(lambda: self.update_animal("bat"))
+        self.ui.dog_slider.valueChanged.connect(lambda: self.update_animal("dog"))
+        self.ui.falcon_slider.valueChanged.connect(lambda: self.update_animal("falcon"))
         # end of animal mode
 
         self.sliders_frames = {
@@ -222,11 +226,11 @@ class Equilizer(QMainWindow):
 
         self.slices_sliders = {
             self.ui.wolf_slider: "wolf",
-            self.ui.horse_slider: "horse",
-            self.ui.cow_slider: "cow",
-            self.ui.dolphin_slider: "dolphin",
-            self.ui.elephant_slider: "elephant",
-            self.ui.frog_slider: "frog",
+            self.ui.bat_slider: "bat",  
+            self.ui.dog_slider: "dog",
+            self.ui.falcon_slider: "cro",
+            # self.ui.elephant_slider: "elephant",
+            # self.ui.frog_slider: "frog",
             # self.trumpet_slider: "trumpet",
             self.ui.Saxophone_slider: "Saxophone",
             self.ui.drums_slider: "drums",
@@ -250,6 +254,7 @@ class Equilizer(QMainWindow):
         self.ui.stop_btn.clicked.connect(self.stop)
         
         self.c = 0
+        self.isreplayed = False
 
     def zoom_in(self):
             x_range, y_range = self.ui.original_graphics_view.viewRange()
@@ -382,12 +387,12 @@ class Equilizer(QMainWindow):
         self.play_equalized_audio = not self.play_equalized_audio
 
     def replay(self):
-        
+        self.isreplayed = True
         self.is_timer_running = False
         self.index = 0
         self.player.stop()
-        self.play_audio = False
-        self.play_equalized_audio = False
+        # self.play_audio = False
+        # self.play_equalized_audio = False
         # self.on_mode_change()
         if self.file_name:
             self.timer.stop()   
@@ -398,7 +403,7 @@ class Equilizer(QMainWindow):
             self.timer.start()  
             self.is_timer_running = True 
         self.ui.play_pause_btn.setIcon(QIcon(f'icons/icons/pause copy.svg'))
-        self.reset_sliders()    
+        # self.reset_sliders()    
         self.state = True
         self.plot_frequency_graph() 
         
@@ -408,11 +413,9 @@ class Equilizer(QMainWindow):
 
         #animal mode
         self.ui.wolf_slider.setValue(100)
-        self.ui.horse_slider.setValue(100)
-        self.ui.cow_slider.setValue(100)
-        self.ui.dolphin_slider.setValue(100)
-        self.ui.elephant_slider.setValue(100)
-        self.ui.frog_slider.setValue(100)
+        self.ui.bat_slider.setValue(100)
+        self.ui.dog_slider.setValue(100)
+        self.ui.falcon_slider.setValue(100)
 
         #ecg mode
         self.ui.vf_arrhythmia_slider.setValue(100)
@@ -535,7 +538,8 @@ class Equilizer(QMainWindow):
                     self.data, low, high, self.fs
                 )
             self.ui.equalized_graphics_view.plot(time_chunk, chunk, clear=True) 
-            self.equalized_spectrogram_viewer.update_spectrogram(self.data, mode = "ECG Mode")
+            if not self.isreplayed:
+                self.equalized_spectrogram_viewer.update_spectrogram(self.data, mode = "ECG Mode")
 
 
         if mode == "Musical Mode" or mode == "Uniform Mode" or mode == "Animal Mode":
@@ -551,7 +555,8 @@ class Equilizer(QMainWindow):
                         self.data, low, high, self.fs
                     )
                     print(self.filtered_data)
-                self.equalized_spectrogram_viewer.update_spectrogram(self.data[: self.chunk_size], mode = "Musical Mode")
+                if not self.isreplayed:
+                    self.equalized_spectrogram_viewer.update_spectrogram(self.data, mode = "Musical Mode")
 
             elif mode == "Uniform Mode":
                 for slider_number, (low, high) in self.uniform_ranges.items():
@@ -559,19 +564,21 @@ class Equilizer(QMainWindow):
                         self.data, low, high, self.fs
                     )
                     print(self.filtered_data)
-                self.equalized_spectrogram_viewer.update_spectrogram(self.data[: self.chunk_size], mode == "Uniform Mode")
+                if not self.isreplayed:
+                    self.equalized_spectrogram_viewer.update_spectrogram(self.data, mode == "Uniform Mode")
             elif mode == "Animal Mode":
                 for animal, (low, high) in self.animal_ranges.items():
                     self.filtered_data[animal] = bandpass_filter(
                         self.data, low, high, self.fs
                     )
                     print(self.filtered_data)
-                self.equalized_spectrogram_viewer.update_spectrogram(self.data[: self.chunk_size], mode == "Animal Mode")
+                if not self.isreplayed:
+                    self.equalized_spectrogram_viewer.update_spectrogram(self.data, mode == "Animal Mode")
 
 
             self.ui.equalized_graphics_view.plot(
-                self.data[: self.chunk_size], clear=True
-            )
+                self.data[: self.chunk_size], clear=True)
+
 
 
     def update_plot(self):
@@ -600,18 +607,28 @@ class Equilizer(QMainWindow):
                 else:
                     self.original_spectrogram_viewer.update_spectrogram(chunk, mode = "Uniform Mode")
 
-                 # Plot cumulative data
-                self.ui.original_graphics_view.plot(self.cumulative_time, self.cumulative_data, clear=True)
-                if self.state == False:
-                    self.ui.equalized_graphics_view.plot(self.cumulative_time, self.cumulative_data, clear=True)
+                 # Update plot with cumulative data
+                x_range_start = max(0, self.cumulative_time[-1] - 0.5)  # Adjust the range window (e.g., 10 seconds)
+                x_range_end = self.cumulative_time[-1]
 
-                    if mode == "Musical Mode":
-                        self.equalized_spectrogram_viewer.update_spectrogram(chunk, mode = "Musical Mode")
-                    elif mode == "Animal Mode":
-                        self.equalized_spectrogram_viewer.update_spectrogram(chunk, mode = "Animal Mode")
-                    else:
-                        self.equalized_spectrogram_viewer.update_spectrogram(chunk, mode = "Uniform Mode")
-                    
+                self.ui.original_graphics_view.plot(
+                    self.cumulative_time, self.cumulative_data, clear=True
+                )
+                self.ui.original_graphics_view.setXRange(x_range_start, x_range_end)  # Set x-axis to scroll
+
+                if self.state == False:
+                    self.ui.equalized_graphics_view.plot(
+                        self.cumulative_time, self.cumulative_data, clear=True
+                    )
+                    self.ui.equalized_graphics_view.setXRange(x_range_start, x_range_end)  # Set x-axis to scroll
+
+                    # if mode == "Musical Mode":
+                    #     self.equalized_spectrogram_viewer.update_spectrogram(chunk, mode="Musical Mode")
+                    # elif mode == "Animal Mode":
+                    #     self.equalized_spectrogram_viewer.update_spectrogram(chunk, mode="Animal Mode")
+                    # else:
+                    #     self.equalized_spectrogram_viewer.update_spectrogram(chunk, mode="Uniform Mode")
+
                 else:
                     chunk_equalized = self.equalized_signal[
                         self.index : self.index + self.chunk_size
@@ -620,17 +637,18 @@ class Equilizer(QMainWindow):
                     self.cumulative_equalized_time.extend(time_chunk_equalized)
                     self.cumulative_equalized_data.extend(chunk_equalized)
 
-                    # Plot cumulative equalized signal
                     self.ui.equalized_graphics_view.plot(
                         self.cumulative_equalized_time, self.cumulative_equalized_data, clear=True
                     )
+                    self.ui.equalized_graphics_view.setXRange(x_range_start, x_range_end)  # Set x-axis to scroll
 
-                    if mode == "Musical Mode":
-                        self.equalized_spectrogram_viewer.update_spectrogram(chunk_equalized, mode = "Musical Mode")
-                    elif mode == "Animal Mode":
-                        self.equalized_spectrogram_viewer.update_spectrogram(chunk_equalized, mode = "Animal Mode")
-                    else:
-                        self.equalized_spectrogram_viewer.update_spectrogram(chunk_equalized, mode = "Uniform Mode")
+
+                    # if mode == "Musical Mode":
+                    #     self.equalized_spectrogram_viewer.update_spectrogram(chunk_equalized, mode = "Musical Mode")
+                    # elif mode == "Animal Mode":
+                    #     self.equalized_spectrogram_viewer.update_spectrogram(chunk_equalized, mode = "Animal Mode")
+                    # else:
+                    #     self.equalized_spectrogram_viewer.update_spectrogram(chunk_equalized, mode = "Uniform Mode")
 
                     # if self.play_equalized_audio:
                     #     # self.c += 1
@@ -655,8 +673,9 @@ class Equilizer(QMainWindow):
         else:
             # Stop the timer and audio stream when the end of the file is reached
             self.timer.stop()
-            if self.play_equalized_audio or self.play_audio:
-                self.player.stop()
+            # if self.play_equalized_audio or self.play_audio:
+            #     self.player.stop()
+            self.replay()    
             # if mode == "Musical Mode" or mode == "Uniform Mode" or mode == "Animal Mode":
             #     self.stream.stop_stream()
             #     self.stream.close()
@@ -684,6 +703,7 @@ class Equilizer(QMainWindow):
 
         self.state = True
         self.plot_frequency_graph()
+        self.equalized_spectrogram_viewer.update_spectrogram(self.equalized_signal, mode="Musical Mode")
 
     def update_animal(self, animal):
         if not self.data.any():
@@ -698,6 +718,8 @@ class Equilizer(QMainWindow):
 
         self.state = True
         self.plot_frequency_graph()
+        self.equalized_spectrogram_viewer.update_spectrogram(self.equalized_signal,mode="Animal Mode")
+
 
     def control_sound(self, btn):
         if not self.data.any():
@@ -751,6 +773,8 @@ class Equilizer(QMainWindow):
         equalized_plot_item.setYRange(original_y_min, original_y_max)
 
         self.plot_frequency_graph()
+        # self.equalized_spectrogram_viewer.update_spectrogram(self.equalized_signal,mode="ECG Mode")
+
 
     def update_uniform_slider(self):
         if not self.data.any():
@@ -766,6 +790,7 @@ class Equilizer(QMainWindow):
             self.equalized_signal += slider_value * self.filtered_data[slider_number]
         self.state = True
         self.plot_frequency_graph()
+        self.equalized_spectrogram_viewer.update_spectrogram(self.equalized_signal,mode="Uniform Mode")
 
     
     def calculate_initial_fft(self):
@@ -812,7 +837,7 @@ class Equilizer(QMainWindow):
             mode_ranges = self.ecg_ranges  
             
         elif mode == "Animal Mode":
-            self.ui.frequency_graphics_view.setLimits(xMin = 0, xMax = 5000) 
+            self.ui.frequency_graphics_view.setLimits(xMin = 0, xMax = 9000) 
             mode_sliders = self.animal_sliders
             mode_ranges = self.animal_ranges
 
