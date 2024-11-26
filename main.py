@@ -541,8 +541,6 @@ class Equilizer(QMainWindow):
                 self.data[: self.chunk_size], clear=True
             )
 
-
-
     def update_plot(self):
         mode = self.ui.mode_comboBox.currentText()
         if self.data.ndim > 1:
