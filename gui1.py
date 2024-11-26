@@ -12,7 +12,7 @@ class Ui_MainWindow(object):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1314, 908)
         MainWindow.setStyleSheet("QWidget {\n"
-"  background-color: #19232D;\n"
+"  background-color: rgb(0, 0, 0);\n"
 "  border: 0px solid #455364;\n"
 "  padding: 0px;\n"
 "  color: #E0E1E3;\n"
@@ -338,7 +338,7 @@ class Ui_MainWindow(object):
         self.original_graphics_view.setTabletTracking(True)
         self.original_graphics_view.setAcceptDrops(True)
         # self.original_graphics_view.setAutoFillBackground(False)
-        self.original_graphics_view.setBackground('#19232D')
+        self.original_graphics_view.setBackground('#000000')
         self.original_graphics_view.setStyleSheet("")
         self.original_graphics_view.setObjectName("original_graphics_view")
         self.horizontalLayout.addWidget(self.original_graphics_view)
@@ -354,7 +354,7 @@ class Ui_MainWindow(object):
         self.horizontalLayout.addWidget(self.original_sound_btn)
         # self.equalized_graphics_view = QtWidgets.QGraphicsView(self.time_graph_frame)
         self.equalized_graphics_view = pg.PlotWidget(self.time_graph_frame)
-        self.equalized_graphics_view.setBackground('#19232D')
+        self.equalized_graphics_view.setBackground('#000000')
         self.equalized_graphics_view.setMouseEnabled(x=True, y=True) 
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
@@ -610,8 +610,8 @@ class Ui_MainWindow(object):
         self.frequency_graphics_view.setAutoFillBackground(False)
         self.frequency_graphics_view.setStyleSheet("")
         self.frequency_graphics_view.setObjectName("frequency_graphics_view")
-        self.gridLayout.addWidget(self.frequency_graphics_view, 0, 0, 1, 1)
-        self.frequency_graphics_view.setBackground('#19232D')
+        self.gridLayout.addWidget(self.frequency_graphics_view, 0, 1, 1, 1)
+        self.frequency_graphics_view.setBackground('#000000')
         self.horizontalLayout_3.addWidget(self.frequency_frame)
         self.equalized_spectro_frame = QtWidgets.QFrame(self.spectro_frame)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
@@ -638,7 +638,7 @@ class Ui_MainWindow(object):
         self.equalized_spectro_graphics_view.setStyleSheet("")
         self.equalized_spectro_graphics_view.setObjectName("equalized_spectro_graphics_view")
         # self.equalized_spectro_graphics_view.setBackground('#19232D')
-        self.gridLayout_3.addWidget(self.equalized_spectro_graphics_view, 0, 0, 1, 1)
+        self.gridLayout_3.addWidget(self.equalized_spectro_graphics_view, 0, 1, 1, 1)
         self.horizontalLayout_3.addWidget(self.equalized_spectro_frame)
         self.verticalLayout.addWidget(self.spectro_frame)
         self.sliders_frame = QtWidgets.QFrame(self.centralwidget)

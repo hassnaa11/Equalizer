@@ -6,15 +6,15 @@ import warnings
 
 class MplCanvas(Canvas):
     def __init__(self):
-        plt.rcParams['axes.facecolor'] = '#19232D'
+        plt.rcParams['axes.facecolor'] = '#000000'
         plt.rc('axes', edgecolor='w')
         plt.rc('xtick', color='w')
         plt.rc('ytick', color='w')
-        plt.rcParams['savefig.facecolor'] = '#19232D'
+        plt.rcParams['savefig.facecolor'] = '#000000'
         plt.rcParams["figure.autolayout"] = True
 
         self.figure = plt.figure()
-        self.figure.patch.set_facecolor('#19232D')
+        self.figure.patch.set_facecolor('#000000')
         self.axes = self.figure.add_subplot()
         super().__init__(self.figure)
         self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
