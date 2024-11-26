@@ -9,7 +9,6 @@ from pathlib import Path
 import numpy as np
 import scipy.io.wavfile as wav
 import pyaudio
-# from arrhythmia_handler import detect_arrhythmias, apply_slider_changes
 from Spectrogram import SpectrogramViewer
 import scipy.signal
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
