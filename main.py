@@ -559,6 +559,7 @@ class Equilizer(QMainWindow):
 
 
             self.ui.equalized_graphics_view.plot(self.cumulative_time, self.cumulative_data,clear=True)
+           
 
 
 
@@ -592,6 +593,7 @@ class Equilizer(QMainWindow):
                 self.ui.original_graphics_view.plot(self.cumulative_time, self.cumulative_data, clear=True)
                 if self.state == False:
                     self.ui.equalized_graphics_view.plot(self.cumulative_time, self.cumulative_data, clear=True)
+                    
 
                     if mode == "Musical Mode":
                         self.equalized_spectrogram_viewer.update_spectrogram(chunk, mode = "Musical Mode")
@@ -608,10 +610,11 @@ class Equilizer(QMainWindow):
                     self.cumulative_equalized_time.extend(time_chunk_equalized)
                     self.cumulative_equalized_data.extend(chunk_equalized)
 
-                    # Plot cumulative equalized signal
+          
                     self.ui.equalized_graphics_view.plot(
                         self.cumulative_equalized_time, self.cumulative_equalized_data, clear=True
                     )
+                  
 
                     if mode == "Musical Mode":
                         self.equalized_spectrogram_viewer.update_spectrogram(chunk_equalized, mode = "Musical Mode")
