@@ -859,12 +859,6 @@ class Equilizer(QMainWindow):
         self.phases = np.ravel(np.array(self.phases))
         self.phases = self.phases[:min_length]
 
-        # Apply scaling to magnitude_array
-        # magnitude_array *= 100  # Multiply each element by 100
-
-        # Check the magnitude before inverse FFT
-        print(np.max(np.abs(magnitude_array)))  # Check if the magnitude is too small or too large
-
         # Inverse Fourier transform
         self.time_domain_signal_modified = np.fft.ifft(magnitude_array * np.exp(1j * self.phases))
 
