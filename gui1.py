@@ -806,6 +806,7 @@ class Ui_MainWindow(object):
         self.pushButton_5.setFlat(True)
         self.pushButton_5.setObjectName("pushButton_5")
         self.verticalLayout_6.addWidget(self.pushButton_5)
+        # self.pushButton_5.setBackground('#00000')
         self.horizontalLayout_15.addLayout(self.verticalLayout_6)
         self.verticalLayout_7 = QtWidgets.QVBoxLayout()
         self.verticalLayout_7.setSpacing(13)

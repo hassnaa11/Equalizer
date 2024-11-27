@@ -311,9 +311,9 @@ class Equilizer(QMainWindow):
 
     def adjust_playback_speed(self):
         speed = self.ui.speed_slider.value()
-        base_interval = 50  # Original interval in ms (1x speed)
-        self.timer.setInterval(base_interval // speed)  # Adjust the timer interval
-        self.player.setPlaybackRate(speed)  # Adjust the playback speed of the audio
+        base_interval = 50  
+        self.timer.setInterval(base_interval // speed)  
+        self.player.setPlaybackRate(speed)  
         print(f"Playback speed set to {speed}x, Timer interval: {self.timer.interval()} ms, Audio playback rate: {self.player.playbackRate()}x")
 
 
@@ -324,10 +324,10 @@ class Equilizer(QMainWindow):
         """
         self.is_audiogram = not self.is_audiogram
         if self.is_audiogram:
-            # self.is_audiogram = False
+           
             self.ui.reset_view_btn.setText("Linear")  
         else:
-            # self.is_audiogram = True
+            
             self.ui.reset_view_btn.setText("Audiogram")  
         
         self.plot_frequency_graph()
@@ -357,15 +357,7 @@ class Equilizer(QMainWindow):
         if not self.data.any():
             return
         self.stop()
-        # if self.file_name:
-            
-            # self.timer.stop()   
-            # self.is_timer_running = False 
-            # self.plot_original_data()
-            # self.index = 0
-            # self.state = False
-            # self.timer.start()  
-            # self.is_timer_running = True  
+        
             
             
                   
@@ -392,7 +384,7 @@ class Equilizer(QMainWindow):
         self.player.stop()
         self.play_audio = False
         self.play_equalized_audio = False
-        # self.on_mode_change()
+        
         if self.file_name:
             self.timer.stop()   
             self.is_timer_running = False 
@@ -408,8 +400,6 @@ class Equilizer(QMainWindow):
         
          
     def reset_sliders(self):
-         # Reset the sliders to their initial values
-
         #animal mode
         self.ui.wolf_slider.setValue(100)
         self.ui.bat_slider.setValue(100)
@@ -472,18 +462,15 @@ class Equilizer(QMainWindow):
             self.from_file = True
             self.plot_original_data()
             self.index = 0
-            # self.play_audio=False
             self.player.setMedia(QMediaContent(QUrl.fromLocalFile(self.file_name)))
-            # self.player.play()
             self.timer.start()
             print(self.file_name)
             self.ui.play_pause_btn.setIcon(QIcon(f'icons/icons/pause copy.svg'))
 
     def plot_original_data(self):
-        self.fs, self.data = wav.read(self.file_name)  # Read the WAV file
+        self.fs, self.data = wav.read(self.file_name)  
         if self.data.ndim > 1:
             self.data = self.data.flatten() 
-        # self.fs = 22050
         print(f"Sample rate of the file: {self.fs}")
         self.cumulative_time = []  # Reset cumulative time
         self.cumulative_data = []  # Reset cumulative data
@@ -491,7 +478,6 @@ class Equilizer(QMainWindow):
         chunk = self.data[: self.chunk_size]
         time_chunk = np.arange(0, len(chunk)) / self.fs
 
-        # Validate chunk lengths
         if len(chunk) != len(time_chunk):
             print("Mismatch in chunk lengths")
             return
@@ -502,7 +488,6 @@ class Equilizer(QMainWindow):
         self.ui.original_graphics_view.plot(self.cumulative_time, self.cumulative_data, clear=True)
         self.cumulative_equalized_time = []  # To store time values for the equalized signal
         self.cumulative_equalized_data = []  # To store equalized signal values
-        
 
         mode = self.ui.mode_comboBox.currentText()
         if mode == "ECG Mode" and self.fs != 500:
@@ -519,7 +504,7 @@ class Equilizer(QMainWindow):
         self.plot_frequency_graph()
         if len(self.data.shape) > 1:
             self.data = self.data[:, 0]
-        # self.ui.original_graphics_view.plot(self.data[: self.chunk_size], clear=True)
+    
         if mode == "Uniform Mode":
             self.original_spectrogram_viewer.update_spectrogram(self.data[: self.chunk_size], mode = "Uniform Mode")
         elif mode == "Musical Mode":
@@ -528,7 +513,6 @@ class Equilizer(QMainWindow):
             self.original_spectrogram_viewer.update_spectrogram(self.data[: self.chunk_size], mode = "Animal Mode")
     
         if mode == "ECG Mode":
-            # print("Displaying ECG data in static mode")
             self.ui.original_graphics_view.plot(self.data, clear=True)
             self.original_spectrogram_viewer.update_spectrogram(self.data, mode = "ECG Mode")
             self.filtered_data = {}
@@ -541,11 +525,6 @@ class Equilizer(QMainWindow):
 
 
         if mode == "Musical Mode" or mode == "Uniform Mode" or mode == "Animal Mode":
-            # self.audio_stream = pyaudio.PyAudio()
-            # self.stream = self.audio_stream.open(
-            #     format=pyaudio.paInt16, channels=1, rate=self.fs, output=True
-            # )
-            
             self.filtered_data = {}
             if mode == "Musical Mode":
                 for instrument, (low, high) in self.instruments.items():
@@ -580,7 +559,6 @@ class Equilizer(QMainWindow):
         if not self.data.any():
             return
       
-
         mode = self.ui.mode_comboBox.currentText()
         chunk = self.data[self.index : self.index + self.chunk_size]
         time_chunk = np.arange(self.index, self.index + self.chunk_size) / self.fs
@@ -603,7 +581,7 @@ class Equilizer(QMainWindow):
                     self.original_spectrogram_viewer.update_spectrogram(chunk, mode = "Uniform Mode")
 
                  # Update plot with cumulative data
-                x_range_start = max(0, self.cumulative_time[-1] - 0.5)  # Adjust the range window (e.g., 10 seconds)
+                x_range_start = max(0, self.cumulative_time[-1] - 0.5) 
                 x_range_end = self.cumulative_time[-1]
 
                 self.ui.original_graphics_view.plot(
@@ -645,18 +623,6 @@ class Equilizer(QMainWindow):
                     else:
                         self.equalized_spectrogram_viewer.update_spectrogram(chunk_equalized, mode = "Uniform Mode")
 
-                    # if self.play_equalized_audio:
-                    #     # self.c += 1
-                    #     self.audio_file = f"temp_audio{chunk_equalized}.wav"
-                    #     # if chunk_equalized != 1:#
-                    #     #     os.remove(f"temp_audio{chunk_equalized-1}.wav")
-
-                    #     # real_signal = np.real(self.time_domain_signal_modified)
-                    #     sf.write(self.audio_file, chunk_equalized.astype(np.int16).tobytes(), self.fs)
-                    #     self.player.pause()
-                # if self.play_audio:
-                #     self.player.play()
-                #     self.stream.write(chunk.astype(np.int16).tobytes())
                 if self.play_equalized_audio or self.play_audio:
                     if self.player.state() != QMediaPlayer.PlayingState:
                         self.player.play()
@@ -666,14 +632,9 @@ class Equilizer(QMainWindow):
                 self.index += self.chunk_size
 
         else:
-            # Stop the timer and audio stream when the end of the file is reached
             self.timer.stop()
             if self.play_equalized_audio or self.play_audio:
                 self.player.stop()
-            # if mode == "Musical Mode" or mode == "Uniform Mode" or mode == "Animal Mode":
-            #     self.stream.stop_stream()
-            #     self.stream.close()
-            #     self.audio_stream.terminate()
                 
 
     def update_instrument(self, instrument):
@@ -689,7 +650,6 @@ class Equilizer(QMainWindow):
         elif instrument=="Saxophone":
             print("Saxophone")
 
-        # Sum up the filtered signals with their respective slider values
         for inst, _ in self.instruments.items():
             print(self.sliders[inst].value())
             instrument_slider_value = self.sliders[inst].value() / 100
@@ -773,7 +733,6 @@ class Equilizer(QMainWindow):
         print(sender_slider)
         print("value: ", slider_value)
         self.equalized_signal = np.zeros_like(self.data, dtype=np.float32)
-        # Sum up the filtered signals with their respective slider values
         for slider_number, slider in self.uniform_sliders.items():
             slider_value = slider.value() / 100
             self.equalized_signal += slider_value * self.filtered_data[slider_number]
@@ -858,9 +817,8 @@ class Equilizer(QMainWindow):
         # frequency graph limits
         self.ui.frequency_graphics_view.setLimits(yMin = np.min(magnitude_array), yMax = 4.1)
                 
-        # clear the previous graph and plot updated graph
         self.ui.frequency_graphics_view.clear()
-        # self.ui.frequency_graphics_view.plot(frequencies_array, magnitude_array)
+        
         # Plot in linear scale by default
         if self.is_audiogram:
             self.plot_audiogram_scale(frequencies_array, magnitude_array)
@@ -872,11 +830,7 @@ class Equilizer(QMainWindow):
         self.phases = np.ravel(np.array(self.phases))
         self.phases = self.phases[:min_length]
 
-        # Apply scaling to magnitude_array
-        # magnitude_array *= 100  # Multiply each element by 100
-
-        # Check the magnitude before inverse FFT
-        print(np.max(np.abs(magnitude_array)))  # Check if the magnitude is too small or too large
+        print(np.max(np.abs(magnitude_array))) 
 
         # Inverse Fourier transform
         self.time_domain_signal_modified = np.fft.ifft(magnitude_array * np.exp(1j * self.phases))
@@ -884,13 +838,7 @@ class Equilizer(QMainWindow):
         # Take real part of the signal
         real_signal = np.real(self.time_domain_signal_modified)
 
-        # Normalize the signal if necessary to prevent clipping
-        real_signal /= np.max(np.abs(real_signal))  # Normalize between -1 and 1
-
-        # Debugging: Check real_signal properties
-        print(f"Max value of real_signal: {np.max(np.abs(real_signal))}")
-        if np.max(np.abs(real_signal)) == 0:
-            print("Warning: Signal is empty or contains only zeros.")
+        real_signal /= np.max(np.abs(real_signal))  
 
         # Handle the previous file safely
         previous_audio_file = f"temp_audio{self.c-1}.wav"
@@ -900,9 +848,6 @@ class Equilizer(QMainWindow):
 
         # Create a temporary file for the output
         self.audio_file = tempfile.mktemp(suffix=".wav")
-
-        # Debug output
-        print(f"Writing to file: {self.audio_file}")
 
         # Write the audio file
         try:
@@ -918,31 +863,16 @@ class Equilizer(QMainWindow):
         except Exception as e:
             print(f"Error reading audio file after write: {e}")
 
-        # Play audio if required
         if self.play_equalized_audio:
             self.player.setMedia(QMediaContent(QUrl.fromLocalFile(self.audio_file)))
-            # self.player.play()
-
-        # else:
-        #     # Use the audiogram scale (logarithmic) if toggled
-        #     self.plot_audiogram_scale(frequencies_array, magnitude_array)
-
-        # if self.is_audiogram:
-        #     self.plot_audiogram_scale(frequencies_array, magnitude_array)
-        # else:
-        #     self.ui.frequency_graphics_view.plot(frequencies_array, magnitude_array)
 
 
     def plot_audiogram_scale(self, frequencies, magnitudes):
-        """
-        Plots frequencies on an audiogram scale (logarithmic).
-        """
         mode = self.ui.mode_comboBox.currentText()
         if len(frequencies) == 0 or len(magnitudes) == 0:
             print("No data to plot on audiogram scale.")
             return
 
-        # Ensure frequencies are non-zero for log scale
         frequencies = np.maximum(frequencies, 1e-9)
         if mode == "Uniform Mode":
             self.ui.frequency_graphics_view.setLimits(xMin=2, xMax=4)
@@ -953,11 +883,7 @@ class Equilizer(QMainWindow):
         # Apply logarithmic transformation
         log_frequencies = np.log10(frequencies)
 
-        # Clear and plot the audiogram
         self.ui.frequency_graphics_view.plot(log_frequencies, magnitudes)
-
-        # Debug output for verification
-        print(f"Plotted audiogram graph with {len(log_frequencies)} points.")
 
 
 

@@ -40,8 +40,8 @@ class MplCanvas(Canvas):
             else:
                 y_min, y_max = 1050, 2100  
 
-            NFFT = 724  # Larger FFT window size 1024
-            noverlap = NFFT//2  # Increase overlap for smoother transitions 768
+            NFFT = 724  
+            noverlap = NFFT//2  
  
             self.axes.specgram(signal, Fs=fs, cmap='viridis', NFFT = NFFT, noverlap = noverlap)
 
@@ -50,8 +50,6 @@ class MplCanvas(Canvas):
             self.axes.set_yticks(np.linspace(y_min, y_max, num=3)) 
 
             self.axes.set_xlabel("Time (s)", color='w', fontsize=10)
-            # self.axes.set_ylabel("Frequency (Hz)", color='w', fontsize=10)
-
             self.axes.tick_params(axis='x', colors='w', labelsize=8)
             self.axes.tick_params(axis='y', colors='w', labelsize=8)
 
