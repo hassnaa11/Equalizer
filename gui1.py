@@ -12,7 +12,7 @@ class Ui_MainWindow(object):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1314, 908)
         MainWindow.setStyleSheet("QWidget {\n"
-"  background-color: rgb(0, 0, 0);\n"
+"  background-color: rgb(0,0,0);\n"
 "  border: 0px solid #455364;\n"
 "  padding: 0px;\n"
 "  color: #E0E1E3;\n"
@@ -574,7 +574,7 @@ class Ui_MainWindow(object):
         self.gridLayout_2.setSpacing(0)
         self.gridLayout_2.setObjectName("gridLayout_2")
         self.original_spectro_graphics_view = QtWidgets.QFrame(self.original_spectro_frame)
-        # self.original_spectro_graphics_view = pg.PlotWidget(self.original_spectro_frame)
+        # self.original_spectro_graphics_view = pg.PlotWidget(self.time_graph_frame)
         # self.original_spectro_graphics_view.setMouseEnabled(x=True, y=True) 
         # self.original_spectro_graphics_view.setBackground('#19232D')
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)

@@ -24,36 +24,66 @@ class MplCanvas(Canvas):
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=UserWarning)
             warnings.filterwarnings("ignore", category=RuntimeWarning)
-            self.axes.cla() 
-
+            self.axes.cla()  # Clear the axes for re-plotting
+            
             if signal.ndim > 1:
-                signal = signal.flatten()  
+                signal = signal.flatten()  # Flatten multi-dimensional arrays to 1D
 
+            # Set frequency axis limits based on the mode
             if mode == "Uniform Mode":
                 y_min, y_max = 1050, 2100
             elif mode == "Musical Mode":
-                y_min, y_max = 80, 7999
+                y_min, y_max = 0, 8000
             elif mode == "ECG Mode":
                 y_min, y_max = 0, 50
             elif mode == "Animal Mode":
-                y_min, y_max = 20, 1500
+                y_min, y_max = 0, 9000
             else:
-                y_min, y_max = 1050, 2100  
+                y_min, y_max = 0, 9000
 
-            NFFT = 724  
-            noverlap = NFFT//2  
- 
-            self.axes.specgram(signal, Fs=fs, cmap='viridis', NFFT = NFFT, noverlap = noverlap)
+            # Define spectrogram parameters
+            NFFT = 768  # FFT size
+            noverlap = NFFT // 2  # Overlap size
 
-            self.axes.set_ylim(y_min, y_max)  
+            # Plot the spectrogram
+            Pxx, freqs, bins, im = self.axes.specgram(
+                signal,
+                Fs=fs,
+                cmap="plasma",
+                NFFT=NFFT,
+                noverlap=noverlap,
+            )
 
-            self.axes.set_yticks(np.linspace(y_min, y_max, num=3)) 
+            # Check if the color bar already exists
+            if hasattr(self, "cbar") and self.cbar is not None:
+                # Update the color bar with the new image
+                self.cbar.ax.clear()
+                self.figure.colorbar(im, cax=self.cbar.ax, ax=self.axes, orientation="vertical")
+            else:
+                # Create the color bar if it doesn't exist
+                self.cbar = self.figure.colorbar(im, ax=self.axes, orientation="vertical")
 
-            self.axes.set_xlabel("Time (s)", color='w', fontsize=10)
-            self.axes.tick_params(axis='x', colors='w', labelsize=8)
-            self.axes.tick_params(axis='y', colors='w', labelsize=8)
+            # Customize the color bar
+            self.cbar.set_label("Intensity (dB)", color="w", fontsize=10)
+            self.cbar.ax.tick_params(colors="w")  # Set tick colors for the color bar
+
+            # Set frequency axis limits
+            self.axes.set_ylim(y_min, y_max)
+
+            # Customize x-axis and y-axis
+            self.axes.set_xlabel("Time (s)", color="w", fontsize=10)
+            self.axes.set_ylabel("Frequency (Hz)", color="w", fontsize=10)
+            self.axes.tick_params(axis="x", colors="w", labelsize=8)
+            self.axes.tick_params(axis="y", colors="w", labelsize=8)
+
+            # Adjust visualization for small frequency ranges
+            if mode == "ECG Mode" or y_max - y_min < 100:
+                self.axes.set_yticks(np.arange(y_min, y_max + 1, 10))  # Fine y-ticks
+            else:
+                self.axes.set_yticks(np.linspace(y_min, y_max, num=5))
 
             self.draw()
+
 
 
 class SpectrogramViewer(QtWidgets.QWidget):
