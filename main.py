@@ -110,10 +110,10 @@ class Equilizer(QMainWindow):
             # "Drums": (3000, 5000),
             # "Saxophone": (5000,8000),
             
-            "Guitar": (600, 1000),
-            "Violin": (1000, 2000),
-            "Drums": (0, 600),
-            "Saxophone": (2000,8000),
+            "Guitar": (20, 500),
+            "Violin": (500, 2000),
+            "Drums": (2000, 5000),
+            "Saxophone": (5000,16000),
             
         }
         # end of music
@@ -126,10 +126,10 @@ class Equilizer(QMainWindow):
             "bat": self.ui.bat_slider,
         }
         self.animal_ranges = { 
-            "dog": (0,400),
-            "wolf": (400, 800), 
-            "falcon": (800, 3000),
-            "bat": (3000, 9000),      
+            "dog": (4000,10000),
+            "wolf": (1000, 4000), 
+            "falcon": (450, 1100),
+            "bat": (0, 450),      
 }
         # self.ui.wolf_slider.setRange(1,100)
         # self.ui.horse_slider.setRange(1,100)
