@@ -126,10 +126,10 @@ class Equilizer(QMainWindow):
             "bat": self.ui.bat_slider,
         }
         self.animal_ranges = { 
-            "dog": (0,400),
-            "wolf": (400, 800), 
-            "falcon": (800, 3000),
-            "bat": (3000, 9000),      
+            "dog": (0,300),
+            "wolf": (300, 700), 
+            "falcon": (700, 2000),
+            "bat": (2000, 9000),      
 }
         # self.ui.wolf_slider.setRange(1,100)
         # self.ui.horse_slider.setRange(1,100)
