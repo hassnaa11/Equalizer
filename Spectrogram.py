@@ -8,54 +8,89 @@ class MplCanvas(Canvas):
     def __init__(self):
         plt.rcParams['axes.facecolor'] = '#000000'
         plt.rc('axes', edgecolor='w')
+        plt.gca().spines['top'].set_color('black')
+        plt.gca().spines['right'].set_color('black')
         plt.rc('xtick', color='w')
         plt.rc('ytick', color='w')
         plt.rcParams['savefig.facecolor'] = '#000000'
-        plt.rcParams["figure.autolayout"] = True
+        # plt.rcParams["figure.autolayout"] = True
 
-        self.figure = plt.figure()
+        # Set the figure size (width, height). Adjust the height here.
+        self.figure = plt.figure(figsize=(6, 4))  # Decrease height (e.g., 6x4 inches)
         self.figure.patch.set_facecolor('#000000')
         self.axes = self.figure.add_subplot()
         super().__init__(self.figure)
         self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.updateGeometry()
 
+        # Hide the right and top axes
+        self.axes.spines['right'].set_visible(False)
+        self.axes.spines['top'].set_visible(False)
+
     def plot_spectrogram(self, signal, fs, mode="Uniform Mode"):
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=UserWarning)
             warnings.filterwarnings("ignore", category=RuntimeWarning)
-            self.axes.cla() 
-
+            self.axes.cla()  # Clear the axes for re-plotting
+            
             if signal.ndim > 1:
-                signal = signal.flatten()  
+                signal = signal.flatten()  # Flatten multi-dimensional arrays to 1D
 
+            # Set frequency axis limits based on the mode
             if mode == "Uniform Mode":
                 y_min, y_max = 1050, 2100
             elif mode == "Musical Mode":
-                y_min, y_max = 80, 7999
+                y_min, y_max = 0, 8000
             elif mode == "ECG Mode":
                 y_min, y_max = 0, 50
             elif mode == "Animal Mode":
-                y_min, y_max = 20, 1500
+                y_min, y_max = 0, 9000
             else:
-                y_min, y_max = 1050, 2100  
+                y_min, y_max = 0, 9000
 
-            NFFT = 768  # Larger FFT window size 1024
-            noverlap = NFFT//2  # Increase overlap for smoother transitions 768
- 
-            self.axes.specgram(signal, Fs=fs, cmap='viridis', NFFT = NFFT, noverlap = noverlap)
+            # Define spectrogram parameters
+            NFFT = 768  # FFT size
+            noverlap = NFFT // 2  # Overlap size
 
-            self.axes.set_ylim(y_min, y_max)  
+            # Plot the spectrogram
+            Pxx, freqs, bins, im = self.axes.specgram(
+                signal,
+                Fs=fs,
+                cmap="plasma",
+                NFFT=NFFT,
+                noverlap=noverlap,
+            )
 
-            self.axes.set_yticks(np.linspace(y_min, y_max, num=3)) 
+            # Check if the color bar already exists
+            if hasattr(self, "cbar") and self.cbar is not None:
+                # Update the color bar with the new image
+                self.cbar.ax.clear()
+                self.figure.colorbar(im, cax=self.cbar.ax, ax=self.axes, orientation="vertical")
+            else:
+                # Create the color bar if it doesn't exist
+                self.cbar = self.figure.colorbar(im, ax=self.axes, orientation="vertical")
 
-            self.axes.set_xlabel("Time (s)", color='w', fontsize=10)
-            # self.axes.set_ylabel("Frequency (Hz)", color='w', fontsize=10)
+            # Customize the color bar
+            self.cbar.set_label("Intensity (dB)", color="w", fontsize=10)
+            self.cbar.ax.tick_params(colors="w")  # Set tick colors for the color bar
 
-            self.axes.tick_params(axis='x', colors='w', labelsize=8)
-            self.axes.tick_params(axis='y', colors='w', labelsize=8)
+            # Set frequency axis limits
+            self.axes.set_ylim(y_min, y_max)
+
+            # Customize x-axis and y-axis
+            self.axes.set_xlabel("Time (s)", color="w", fontsize=10)  # Add the x-axis label
+            self.axes.set_ylabel("Frequency (Hz)", color="w", fontsize=10)
+            self.axes.tick_params(axis="x", colors="w", labelsize=8)  # Set x-axis ticks to white
+            self.axes.tick_params(axis="y", colors="w", labelsize=8)
+
+            # Adjust visualization for small frequency ranges
+            if mode == "ECG Mode" or y_max - y_min < 100:
+                self.axes.set_yticks(np.arange(y_min, y_max + 1, 10))  # Fine y-ticks
+            else:
+                self.axes.set_yticks(np.linspace(y_min, y_max, num=5))
 
             self.draw()
+
 
 
 class SpectrogramViewer(QtWidgets.QWidget):
@@ -72,7 +107,6 @@ class SpectrogramViewer(QtWidgets.QWidget):
         self.canvas.plot_spectrogram(signal, self.sampling_rate, mode)
 
     def clear_spectrogram(self):
-    
         self.canvas.axes.cla()  
         self.canvas.draw()  
 
