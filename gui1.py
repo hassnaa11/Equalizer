@@ -1310,7 +1310,7 @@ class Ui_MainWindow(object):
         self.mode_comboBox.setItemText(0, _translate("MainWindow", "Uniform Mode"))
         self.mode_comboBox.setItemText(1, _translate("MainWindow", "Animal Mode"))
         self.mode_comboBox.setItemText(2, _translate("MainWindow", "Musical Mode"))
-        self.mode_comboBox.setItemText(3, _translate("MainWindow", "ECG Mode"))
+        self.mode_comboBox.setItemText(3, _translate("MainWindow", "Weiner Filter"))
         self.replay_btn.setToolTip(_translate("MainWindow", "<html><head/><body><p>Replay activate siganls</p></body></html>"))
         self.replay_btn.setShortcut(_translate("MainWindow", "Ctrl+R"))
         self.play_pause_btn.setToolTip(_translate("MainWindow","<html><head/><body><p>Pause/Play Signals</p></body></html>"))

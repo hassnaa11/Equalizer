@@ -1,4 +1,5 @@
 from gui1 import Ui_MainWindow
+from weiner_filter import WeinerFilter
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
@@ -16,9 +17,10 @@ from PyQt5.QtCore import QUrl
 import numpy as np, bisect, librosa, soundfile as sf
 import os
 import tempfile
+from scipy.io import wavfile
 temp_audio_file = tempfile.mktemp(suffix=".wav")
 # self.audio_file = tempfile.mktemp(suffix=".wav")
-
+from scipy.signal import resample
 
 def bandpass_filter(data, lowcut, highcut, fs, order=5):
     """
@@ -153,7 +155,7 @@ class Equilizer(QMainWindow):
             "Uniform Mode": self.ui.uniform_sliders_frame,
             "Animal Mode": self.ui.animals_sliders_frame,
             "Musical Mode": self.ui.music_sliders_frame,
-            "ECG Mode": self.ui.ecg_sliders_frame,
+            "Weiner Filter": self.ui.ecg_sliders_frame,
         }
         for sliders_frame in self.sliders_frames:
             self.sliders_frames[sliders_frame].setVisible(False)
@@ -269,6 +271,9 @@ class Equilizer(QMainWindow):
         
         self.c = 0
         self.isreplayed = False
+        
+        # Weiner Filter 
+        self.weiner = WeinerFilter()
 
     def zoom_in(self):
             x_range, y_range = self.ui.original_graphics_view.viewRange()
@@ -423,7 +428,7 @@ class Equilizer(QMainWindow):
         self.ui.dog_slider.setValue(100)
         self.ui.falcon_slider.setValue(100)
 
-        #ecg mode
+        #Weiner Filter
         self.ui.vf_arrhythmia_slider.setValue(100)
         self.ui.mi_arrhythmia_slider.setValue(100)
         self.ui.sr_arrhythmia_slider.setValue(100)
@@ -461,7 +466,7 @@ class Equilizer(QMainWindow):
         for sliders_frame in self.sliders_frames:
             self.sliders_frames[sliders_frame].setVisible(False)
         self.sliders_frames[text].setVisible(True)
-        if text == "ECG Mode":
+        if text == "Weiner Filter":
             self.ecg_mode_selected = True
             self.ui.original_graphics_view.xRange = [0, 1e3]
             self.ui.original_graphics_view.yRange = [-2, 2]
@@ -507,13 +512,13 @@ class Equilizer(QMainWindow):
         self.cumulative_equalized_data = []  # To store equalized signal values
 
         mode = self.ui.mode_comboBox.currentText()
-        if mode == "ECG Mode" and self.fs != 500:
-            print("Resampling ECG signal to 500 Hz")
-            target_fs = 500                                           
-            num_samples = int(len(self.data) * target_fs / self.fs)
-            self.data = scipy.signal.resample(self.data, num_samples)
-            self.fs = target_fs
-            print(f"Resampled to: {self.fs} Hz")
+        # if mode == "Weiner Filter" and self.fs != 500:
+        #     print("Resampling ECG signal to 500 Hz")
+        #     target_fs = 500                                           
+        #     num_samples = int(len(self.data) * target_fs / self.fs)
+        #     self.data = scipy.signal.resample(self.data, num_samples)
+        #     self.fs = target_fs
+        #     print(f"Resampled to: {self.fs} Hz")
 
 
         self.equalized_signal = self.data
@@ -529,20 +534,21 @@ class Equilizer(QMainWindow):
         elif mode == "Animal Mode":
             self.original_spectrogram_viewer.update_spectrogram(self.data[: self.chunk_size], mode = "Animal Mode")
     
-        if mode == "ECG Mode":
-            self.ui.original_graphics_view.plot(self.data, clear=True)
-            self.original_spectrogram_viewer.update_spectrogram(self.data, mode = "ECG Mode")
-            self.filtered_data = {}
-            for band_number, (low, high) in self.ecg_ranges.items():
-                self.filtered_data[band_number] = bandpass_filter(
-                    self.data, low, high, self.fs
-                )
-            self.ui.equalized_graphics_view.plot(time_chunk, chunk, clear=True) 
-            if not self.isreplayed:
-                self.equalized_spectrogram_viewer.update_spectrogram(self.data, mode = "ECG Mode")
+        if mode == "Weiner Filter":
+            self.original_spectrogram_viewer.update_spectrogram(self.data[: self.chunk_size], mode = "Weiner Filter")
+            # self.ui.original_graphics_view.plot(self.data, clear=True)
+            # self.original_spectrogram_viewer.update_spectrogram(self.data, mode = "Weiner Filter")
+            # self.filtered_data = {}
+            # for band_number, (low, high) in self.ecg_ranges.items():
+            #     self.filtered_data[band_number] = bandpass_filter(
+            #         self.data, low, high, self.fs
+            #     )
+            # self.ui.equalized_graphics_view.plot(time_chunk, chunk, clear=True) 
+            # if not self.isreplayed:
+            #     self.equalized_spectrogram_viewer.update_spectrogram(self.data, mode = "Weiner Filter")
 
 
-        if mode == "Musical Mode" or mode == "Uniform Mode" or mode == "Animal Mode":
+        if mode == "Musical Mode" or mode == "Uniform Mode" or mode == "Animal Mode" or mode == "Weiner Filter":
             self.filtered_data = {}
             if mode == "Musical Mode":
                 for instrument, (low, high) in self.instruments.items():
@@ -569,6 +575,11 @@ class Equilizer(QMainWindow):
                     print(self.filtered_data)
                 if not self.isreplayed:
                     self.equalized_spectrogram_viewer.update_spectrogram(self.data, mode == "Animal Mode")
+            
+            # elif mode == "Weiner Filter":
+                # fs,noisy_signal = wavfile.read('Signals/weiner/noisy_weiner1.wav')
+                # self.audio_file = self.weiner.iterative_wiener_filter(self.data, noisy_signal, fs)       
+                        
 
 
             self.ui.equalized_graphics_view.plot(
@@ -588,11 +599,11 @@ class Equilizer(QMainWindow):
         self.cumulative_time.extend(time_chunk)
         self.cumulative_data.extend(chunk)
 
-        if mode == "ECG Mode":
-            return
+        # if mode == "Weiner Filter":
+        #     return
 
         if self.index + self.chunk_size <= len(self.data):
-            if mode == "Musical Mode" or mode == "Uniform Mode" or mode == "Animal Mode":
+            if mode == "Musical Mode" or mode == "Uniform Mode" or mode == "Animal Mode" or mode == "Weiner Filter":
                 # Get the next chunk of the original data
                 chunk = self.data[self.index : self.index + self.chunk_size]
 
@@ -714,6 +725,7 @@ class Equilizer(QMainWindow):
             self.play_audio = not self.play_audio
             self.play_equalized_audio = False
             self.player.setMedia(QMediaContent(QUrl.fromLocalFile(self.file_name)))
+            
 
 
     def update_ecg_slider(self):
@@ -747,14 +759,14 @@ class Equilizer(QMainWindow):
         # Plot the updated equalized signal with the same y-axis limits as the original graph
         equalized_plot_item = self.ui.equalized_graphics_view.getPlotItem()
         self.ui.equalized_graphics_view.plot(self.equalized_signal[:2000], clear=True)
-        # self.equalized_spectrogram_viewer.setImage(self.equalized_signal[:2000], autoLevels=False, autoHistogramRange=False, mode="ECG Mode")
-        self.equalized_spectrogram_viewer.update_spectrogram(self.equalized_signal[:2000], mode="ECG Mode")
+        # self.equalized_spectrogram_viewer.setImage(self.equalized_signal[:2000], autoLevels=False, autoHistogramRange=False, mode="Weiner Filter")
+        self.equalized_spectrogram_viewer.update_spectrogram(self.equalized_signal[:2000], mode="Weiner Filter")
 
         # Set the y-axis range for the equalized graph
         equalized_plot_item.setYRange(original_y_min, original_y_max)
 
         self.plot_frequency_graph()
-        # self.equalized_spectrogram_viewer.update_spectrogram(self.equalized_signal,mode="ECG Mode")
+        # self.equalized_spectrogram_viewer.update_spectrogram(self.equalized_signal,mode="Weiner Filter")
 
 
     def update_uniform_slider(self):
@@ -774,11 +786,11 @@ class Equilizer(QMainWindow):
 
     
     def calculate_initial_fft(self):
-        mode = self.ui.mode_comboBox.currentText()
-        if mode == "ECG Mode":
-            sampling_rate = 500
-        else:
-            sampling_rate = 44100    
+        # mode = self.ui.mode_comboBox.currentText()
+        # if mode == "Weiner Filter":
+        #     sampling_rate = 500
+        # else:
+        sampling_rate = 44100    
         dt = 1 / sampling_rate
 
         # perform FFT, get frequencies and magnitudes
@@ -811,7 +823,7 @@ class Equilizer(QMainWindow):
             mode_sliders = self.sliders
             mode_ranges = self.instruments
 
-        elif mode == "ECG Mode":
+        elif mode == "Weiner Filter":
             self.ui.frequency_graphics_view.setLimits(xMin=0, xMax=50, yMin=0, yMax=1)
             mode_sliders = self.ecg_sliders
             mode_ranges = self.ecg_ranges  
@@ -858,7 +870,28 @@ class Equilizer(QMainWindow):
         else:
             self.ui.frequency_graphics_view.plot(frequencies_array, magnitude_array)
         
-        if mode == "ECG Mode":
+        if mode == "Weiner Filter":
+            fs, self.data = wavfile.read(self.file_name)
+            if self.file_name == 'C:/Hassnaa/SBME26/3 - 1/DSP/Equalizer/Signals/weiner/1/noisy_weiner1.wav':
+                fs, noise_signal = wavfile.read('Signals/weiner/1/blue-noise-by-digitalspa-250234.wav')
+            elif self.file_name == 'C:/Hassnaa/SBME26/3 - 1/DSP/Equalizer/Signals/weiner/2/fanan.wav':
+                fs, noise_signal = wavfile.read('Signals/weiner/2/fanan_noise.wav')    
+            
+            # Ensure signals are mono
+            if self.data.ndim > 1:
+                self.data = self.data[:, 0]
+            if noise_signal.ndim > 1:
+                noise_signal = noise_signal[:, 0]
+
+            # Apply the Wiener filter
+            self.audio_file = self.weiner.iterative_wiener_filter(self.data, noise_signal, fs)
+
+            # Check if the file exists
+            if os.path.exists(self.audio_file):
+                print(f"Denoised signal saved at: {self.audio_file}")
+
+            if self.play_equalized_audio:
+                self.player.setMedia(QMediaContent(QUrl.fromLocalFile(self.audio_file)))
             return
             
         self.phases = np.ravel(np.array(self.phases))
@@ -888,7 +921,6 @@ class Equilizer(QMainWindow):
         except Exception as e:
             print(f"Error writing audio file: {e}")
 
-        # Optionally, check the written file
         try:
             loaded_signal, _ = sf.read(self.audio_file)
             print(f"Loaded signal max value: {np.max(np.abs(loaded_signal))}")
