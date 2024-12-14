@@ -13,12 +13,12 @@ class WeinerFilter:
     def __init__(self):
         super().__init__()
 
-    def iterative_wiener_filter(self, noisy_signal, noise_signal, fs, n_fft=1024, overlap=None, iterations=3, spectral_floor=0.1):
+    def apply_wiener_filter(self, noisy_signal, noise_signal, fs, n_fft=1024, overlap=None, iterations=3, spectral_floor=0.1):
         if overlap is None or overlap >= n_fft:
             overlap = n_fft // 2
 
-        # Compute STFT
-        f, t, noisy_stft = stft(noisy_signal, fs, nperseg=n_fft, noverlap=overlap)
+        # Compute STFT - Short Time Fourier Transform
+        _, _, noisy_stft = stft(noisy_signal, fs, nperseg=n_fft, noverlap=overlap)
         _, _, noise_stft = stft(noise_signal, fs, nperseg=n_fft, noverlap=overlap)
 
         # Estimate noise PSD
@@ -39,15 +39,16 @@ class WeinerFilter:
         real_signal = np.real(denoised_signal)
         real_signal /= np.max(np.abs(real_signal))  # Normalize
         sf.write(temp_audio_file, real_signal.astype(np.float32), fs)
-        return temp_audio_file
+        return temp_audio_file, real_signal
 
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     weiner = WeinerFilter()
 
-    fs, noisy_signal = wavfile.read('Signals/weiner/2/fanan.wav')
-    fs, noise_signal = wavfile.read('Signals/weiner/2/fanan_noise.wav')
+    fs, noisy_signal = wavfile.read('Signals/weiner/anne_ship.wav')
+    fs, noise_signal = wavfile.read('Signals/weiner/ship.wav')
+    print(noisy_signal)
 
     # Ensure signals are mono
     if noisy_signal.ndim > 1:
@@ -55,7 +56,7 @@ if __name__ == "__main__":
     if noise_signal.ndim > 1:
         noise_signal = noise_signal[:, 0]
 
-    denoised_signal_path = weiner.iterative_wiener_filter(noisy_signal, noise_signal, fs)
+    denoised_signal_path,_ = weiner.apply_wiener_filter(noisy_signal, noise_signal, fs)
 
     if os.path.exists(denoised_signal_path):
         print(f"Denoised signal saved at: {denoised_signal_path}")
