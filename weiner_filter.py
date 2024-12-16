@@ -39,7 +39,7 @@ class WeinerFilter:
         real_signal = np.real(denoised_signal)
         real_signal /= np.max(np.abs(real_signal))  # Normalize
         sf.write(temp_audio_file, real_signal.astype(np.float32), fs)
-        return temp_audio_file, real_signal
+        return temp_audio_file, denoised_signal
 
 
 if __name__ == "__main__":
@@ -47,7 +47,7 @@ if __name__ == "__main__":
     weiner = WeinerFilter()
 
     fs, noisy_signal = wavfile.read('Signals/weiner/anne_ship.wav')
-    fs, noise_signal = wavfile.read('Signals/weiner/ship.wav')
+    fs, noise_signal = wavfile.read('Signals/weiner/anne_ship.wav')
     print(noisy_signal)
 
     # Ensure signals are mono

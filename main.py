@@ -254,6 +254,7 @@ class Equilizer(QMainWindow):
         self.done_selection = False
         self.ui.select_btn.hide()
         self.ui.done_select_btn.hide() 
+        self.is_stopped = False 
 
 
     def select_signal_to_filter(self):
@@ -320,6 +321,8 @@ class Equilizer(QMainWindow):
         if noise_signal.ndim > 1:
             noise_signal = noise_signal[:, 0]
         self.audio_file, self.equalized_signal = self.weiner.apply_wiener_filter(self.data, noise_signal, fs)
+        print(self.equalized_signal) 
+        self.ui.equalized_graphics_view.clear()
         if os.path.exists(self.audio_file):
             print(f"Denoised signal saved at: {self.audio_file}")
 
@@ -364,6 +367,7 @@ class Equilizer(QMainWindow):
             self.ui.equalized_graphics_view.setYRange(*new_y_range)
 
     def stop(self):
+        self.is_stopped = True
         mode = self.ui.mode_comboBox.currentText()
         if mode == "Weiner Filter":
             self.ui.select_btn.show()
@@ -387,6 +391,7 @@ class Equilizer(QMainWindow):
         self.ui.frequency_graphics_view.clear()
         self.ui.original_graphics_view.clear()
         self.ui.equalized_graphics_view.clear()
+        self.equalized_signal = None
         self.reset_sliders()
            
 
@@ -570,9 +575,13 @@ class Equilizer(QMainWindow):
 
         mode = self.ui.mode_comboBox.currentText()
 
-        if mode is not "Weiner Filter":
+        if not self.isreplayed:
             self.equalized_signal = self.data
-            self.ui.equalized_graphics_view.plot(self.data[: self.chunk_size], clear=True)
+        if self.is_stopped:
+            self.is_stopped = False
+            self.equalized_signal = self.data    
+            
+        self.ui.equalized_graphics_view.plot(self.data[: self.chunk_size], clear=True)
         
         self.calculate_initial_fft()
         self.plot_frequency_graph()
@@ -803,10 +812,6 @@ class Equilizer(QMainWindow):
 
     
     def calculate_initial_fft(self):
-        # mode = self.ui.mode_comboBox.currentText()
-        # if mode == "Weiner Filter":
-        #     sampling_rate = 500
-        # else:
         sampling_rate = 44100    
         dt = 1 / sampling_rate
 
