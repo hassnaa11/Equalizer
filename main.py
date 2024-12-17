@@ -119,27 +119,29 @@ class Equilizer(QMainWindow):
 
         # animal mode
         self.animal_sliders = {
-            "dog": self.ui.dog_slider,
-            "wolf": self.ui.wolf_slider,
-            "falcon": self.ui.falcon_slider,
-            "bat": self.ui.bat_slider,
+            "cello": self.ui.cello_slider,
+            "drums": self.ui.drums_slider2,
+            "zebra": self.ui.zebra_slider,
+            "monkey": self.ui.monkey_slider,
+            "elephant": self.ui.elephant_slider,
         }
         self.animal_ranges = { 
-            "dog": (0,300),
-            "wolf": (300, 700), 
-            "falcon": (700, 2000),
-            "bat": (2000, 9000),      
+            "cello": (1000,2000),
+            "drums": (600, 1000), 
+            "zebra": (600, 800),
+            "monkey": (2000, 10000),
+            "elephant": (600, 1000),      
 }
 
-        self.ui.pushButton_5.setIcon(QIcon(f'icons/icons/dog.png'))
-        self.ui.pushButton_6.setIcon(QIcon(f'icons/icons/bat.png'))
-        self.ui.pushButton_7.setIcon(QIcon(f'icons/icons/wolf.png'))
-        self.ui.pushButton_2.setIcon(QIcon(f'icons/icons/crow.png'))
+        self.ui.pushButton_5.setIcon(QIcon(f'icons/icons/cello.png'))
+        self.ui.pushButton_6.setIcon(QIcon(f'icons/icons/monkey.png'))
+        self.ui.pushButton_7.setIcon(QIcon(f'icons/icons/drums2.png'))
+        self.ui.pushButton_2.setIcon(QIcon(f'icons/icons/zebra.png'))
 
-        self.ui.wolf_slider.valueChanged.connect(lambda: self.update_animal("wolf"))
-        self.ui.bat_slider.valueChanged.connect(lambda: self.update_animal("bat"))
-        self.ui.dog_slider.valueChanged.connect(lambda: self.update_animal("dog"))
-        self.ui.falcon_slider.valueChanged.connect(lambda: self.update_animal("falcon"))
+        self.ui.drums_slider.valueChanged.connect(lambda: self.update_animal("drums"))
+        self.ui.monkey_slider.valueChanged.connect(lambda: self.update_animal("monkey"))
+        self.ui.cello_slider.valueChanged.connect(lambda: self.update_animal("cello"))
+        self.ui.zebra_slider.valueChanged.connect(lambda: self.update_animal("zebra"))
         # end of animal mode
 
         self.sliders_frames = {
@@ -200,10 +202,10 @@ class Equilizer(QMainWindow):
         self.ui.uniform_slider_10.valueChanged.connect(self.update_uniform_slider)
         
         self.slices_sliders = {
-            self.ui.wolf_slider: "wolf",
-            self.ui.bat_slider: "bat",  
-            self.ui.dog_slider: "dog",
-            self.ui.falcon_slider: "cro",
+            self.ui.drums_slider: "drums",
+            self.ui.monkey_slider: "monkey",  
+            self.ui.cello_slider: "cello",
+            self.ui.zebra_slider: "cro",
             # self.ui.elephant_slider: "elephant",
             # self.ui.frog_slider: "frog",
             # self.trumpet_slider: "trumpet",
@@ -485,10 +487,11 @@ class Equilizer(QMainWindow):
          
     def reset_sliders(self):
         #animal mode
-        self.ui.wolf_slider.setValue(100)
-        self.ui.bat_slider.setValue(100)
-        self.ui.dog_slider.setValue(100)
-        self.ui.falcon_slider.setValue(100)
+        self.ui.drums_slider.setValue(100)
+        self.ui.monkey_slider.setValue(100)
+        self.ui.cello_slider.setValue(100)
+        self.ui.zebra_slider.setValue(100)
+        self.ui.elephant_slider.setValue(100)
 
         #uniform mode
         self.ui.uniform_slider_1.setValue(100)
@@ -570,7 +573,7 @@ class Equilizer(QMainWindow):
 
         mode = self.ui.mode_comboBox.currentText()
 
-        if mode is not "Weiner Filter":
+        if mode != "Weiner Filter":
             self.equalized_signal = self.data
             self.ui.equalized_graphics_view.plot(self.data[: self.chunk_size], clear=True)
         
@@ -852,7 +855,7 @@ class Equilizer(QMainWindow):
             return
             
         elif mode == "Animal Mode":
-            self.ui.frequency_graphics_view.setLimits(xMin = 0, xMax = 9000) 
+            self.ui.frequency_graphics_view.setLimits(xMin = 600, xMax = 10000) 
             mode_sliders = self.animal_sliders
             mode_ranges = self.animal_ranges
 
@@ -942,7 +945,7 @@ class Equilizer(QMainWindow):
         elif mode == "Musical Mode":
             self.ui.frequency_graphics_view.setLimits(xMin=0, xMax=4.1)
         elif mode == "Animal Mode":
-            self.ui.frequency_graphics_view.setLimits(xMin=0, xMax=4.1)
+            self.ui.frequency_graphics_view.setLimits(xMin=2.7, xMax=4)
         else:
             self.ui.frequency_graphics_view.setLimits(xMin=0, xMax=2)
 
