@@ -965,6 +965,12 @@ class Ui_MainWindow(object):
         self.verticalLayout_12 = QtWidgets.QVBoxLayout()
         self.verticalLayout_12.setSpacing(12)
         self.verticalLayout_12.setObjectName("verticalLayout_12")
+
+        self.verticalLayout_17 = QtWidgets.QVBoxLayout()
+        self.verticalLayout_17.setSpacing(12)
+        self.verticalLayout_17.setObjectName("verticalLayout_17")
+
+
         self.horizontalLayout_7 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_7.setObjectName("horizontalLayout_7")
         spacerItem16 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
@@ -981,9 +987,46 @@ class Ui_MainWindow(object):
         self.guitar_slider.setOrientation(QtCore.Qt.Vertical)
         self.guitar_slider.setObjectName("guitar_slider")
         self.horizontalLayout_7.addWidget(self.guitar_slider)
+
+
+        self.horizontalLayout_22 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_22.setObjectName("horizontalLayout_22")
+        spacerItem50 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_22.addItem(spacerItem50)
+        self.new_slider = QtWidgets.QSlider(self.music_sliders_frame)
+        self.new_slider.setCursor(QtGui.QCursor(QtCore.Qt.OpenHandCursor))
+        self.new_slider.setMinimum(0)
+        self.new_slider.setMaximum(200)
+        self.new_slider.setValue(100)
+        self.new_slider.setSingleStep(10)
+        self.new_slider.setPageStep(10)
+        self.new_slider.setProperty("value", 0)
+        self.new_slider.setSliderPosition(0)
+        self.new_slider.setOrientation(QtCore.Qt.Vertical)
+        self.new_slider.setObjectName("new_slider")
+        self.horizontalLayout_22.addWidget(self.new_slider)
+
         spacerItem17 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_7.addItem(spacerItem17)
         self.verticalLayout_12.addLayout(self.horizontalLayout_7)
+
+
+        spacerItem51 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_22.addItem(spacerItem51)
+        self.verticalLayout_17.addLayout(self.horizontalLayout_22)
+
+        self.pushButton_13 = QtWidgets.QPushButton(self.music_sliders_frame)
+        self.pushButton_13.setEnabled(False)
+        self.pushButton_13.setText("")
+        # icon14 = QtGui.QIcon()
+        # icon14.addPixmap(QtGui.QPixmap(":/icons/icons/guitar.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.pushButton_13.setIcon(icon13)
+        self.pushButton_13.setIconSize(QtCore.QSize(40, 40))
+        self.pushButton_13.setFlat(True)
+        self.pushButton_13.setObjectName("pushButton_13")
+        self.verticalLayout_17.addWidget(self.pushButton_13)
+        self.horizontalLayout_6.addLayout(self.verticalLayout_17)
+
         self.pushButton_8 = QtWidgets.QPushButton(self.music_sliders_frame)
         self.pushButton_8.setEnabled(False)
         self.pushButton_8.setText("")
@@ -1000,6 +1043,7 @@ class Ui_MainWindow(object):
         self.pushButton_8.setObjectName("pushButton_8")
         self.verticalLayout_12.addWidget(self.pushButton_8)
         self.horizontalLayout_6.addLayout(self.verticalLayout_12)
+
         self.verticalLayout_11 = QtWidgets.QVBoxLayout()
         self.verticalLayout_11.setSpacing(12)
         self.verticalLayout_11.setObjectName("verticalLayout_11")
