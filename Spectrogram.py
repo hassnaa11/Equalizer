@@ -1,6 +1,8 @@
 from PyQt5 import QtWidgets
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as Canvas
 import matplotlib.pyplot as plt
+from matplotlib.cm import ScalarMappable
+from matplotlib.colors import Normalize
 import numpy as np
 import warnings
 
@@ -16,12 +18,27 @@ class MplCanvas(Canvas):
         # plt.rcParams["figure.autolayout"] = True
 
         # Set the figure size (width, height). Adjust the height here.
-        self.figure = plt.figure(figsize=(8, 6))  # Decrease height (e.g., 6x4 inches)
+        self.figure = plt.figure(figsize=(4.5, 2))  # Decrease height (e.g., 6x4 inches)
         self.figure.patch.set_facecolor('#000000')
         self.axes = self.figure.add_subplot()
         super().__init__(self.figure)
         self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.updateGeometry()
+        
+        norm = Normalize(vmin=0, vmax=1)  # Set the range of the colorbar
+        cmap = 'viridis'  # Choose a colormap
+        mappable = ScalarMappable(norm=norm, cmap=cmap)
+
+        # Add the colorbar to the figure
+        colorbar = self.figure.colorbar(mappable, ax=self.axes, orientation='vertical', pad=0.02)
+        colorbar.ax.yaxis.set_tick_params(color='w')  # Set the color of the ticks on the colorbar
+        colorbar.outline.set_edgecolor('w')  # Set the edge color of the colorbar
+        # colorbar.set_label('Amplitude', color='w')  # Set label for colorbar
+
+        # Update tick label colors to match the dark theme
+        self.axes.tick_params(axis='x', colors='w')
+        self.axes.tick_params(axis='y', colors='w')
+        colorbar.ax.tick_params(colors='w')  # Set tick colors for the color bar
 
         # Hide the right and top axes
         self.axes.spines['right'].set_visible(False)
@@ -45,9 +62,9 @@ class MplCanvas(Canvas):
             elif mode == "Weiner Filter":
                 y_min, y_max = 0, 8000
             elif mode == "Animal Mode":
-                y_min, y_max = 600, 10000
+                y_min, y_max = 0, 8000
             else:
-                y_min, y_max = 0, 10000
+                y_min, y_max = 0, 8000
 
             # Define spectrogram parameters
             NFFT = 768  # FFT size
