@@ -78,8 +78,8 @@ class Equilizer(QMainWindow):
         self.chunk_size = 3000
         self.ui.pushButton_12.setIcon(QIcon(f'icons/icons/drums2.png'))
 
-        self.ui.guitar_slider.valueChanged.connect(
-            lambda: self.update_instrument("Guitar")
+        self.ui.drums_slider.valueChanged.connect(
+            lambda: self.update_instrument("drums")
         )
         self.ui.Violin_slider.valueChanged.connect(
             lambda: self.update_instrument("Violin")
@@ -98,18 +98,18 @@ class Equilizer(QMainWindow):
             lambda: self.control_sound("equalized_btn")
         )
         self.sliders = {
-            "Guitar": self.ui.guitar_slider,
+            "drums": self.ui.drums_slider,
             "Saxophone": self.ui.Saxophone_slider,
             "Drums": self.ui.drums_slider,
             "Violin": self.ui.Violin_slider,
         }
         self.instruments = {
-            # "Guitar": (80, 1500),
+            # "drums": (80, 1500),
             # "Violin": (1500, 3000),
             # "Drums": (3000, 5000),
             # "Saxophone": (5000,8000),
             
-            "Guitar": (20, 500),
+            "drums": (20, 500),
             "Violin": (500, 2000),
             "Drums": (2000, 5000),
             "Saxophone": (5000,16000),
@@ -119,36 +119,36 @@ class Equilizer(QMainWindow):
 
         # animal mode
         self.animal_sliders = {
-            "guitar": self.ui.guitar2_slider,
+            "drums": self.ui.drums2_slider,
             "cricket": self.ui.cricket_slider,
-            "cow": self.ui.cow_slider,
+            "bear": self.ui.bear_slider,
             "flute": self.ui.flute_slider,
             "birds": self.ui.birds_slider,
         }
         self.animal_ranges = { 
-            "guitar": (0,200),
-            "crickets": (3000, 8000), 
-            "cow": (200, 1000),
-            "flute": (800, 1100),
-            "birds": (1300, 2700),      
+            "drums": (250,650),
+            "cricket": (3000, 6000), 
+            "bear": (0, 250),
+            "flute": (650, 2200),
+            "birds": (2200, 3000),      
 }
 
-        self.ui.pushButton_5.setIcon(QIcon(f'icons/icons/guitar.png'))
+        self.ui.pushButton_5.setIcon(QIcon(f'icons/icons/drums.png'))
         self.ui.pushButton_6.setIcon(QIcon(f'icons/icons/flute.png'))
         self.ui.pushButton_7.setIcon(QIcon(f'icons/icons/cricket.png'))
-        self.ui.pushButton_2.setIcon(QIcon(f'icons/icons/cow.png'))
+        self.ui.pushButton_2.setIcon(QIcon(f'icons/icons/bear.png'))
         self.ui.pushButton.setIcon(QIcon(f'icons/icons/crow.png'))
 
         self.ui.cricket_slider.valueChanged.connect(lambda: self.update_animal("cricket"))
         self.ui.flute_slider.valueChanged.connect(lambda: self.update_animal("flute"))
-        self.ui.guitar2_slider.valueChanged.connect(lambda: self.update_animal("guitar"))
-        self.ui.cow_slider.valueChanged.connect(lambda: self.update_animal("cow"))
+        self.ui.drums2_slider.valueChanged.connect(lambda: self.update_animal("drums"))
+        self.ui.bear_slider.valueChanged.connect(lambda: self.update_animal("bear"))
         self.ui.birds_slider.valueChanged.connect(lambda: self.update_animal("birds"))
         
         self.ui.cricket_slider.setValue(100)
         self.ui.flute_slider.setValue(100)
-        self.ui.guitar2_slider.setValue(100)
-        self.ui.cow_slider.setValue(100)
+        self.ui.drums2_slider.setValue(100)
+        self.ui.bear_slider.setValue(100)
         self.ui.birds_slider.setValue(100)
         
         # end of animal mode
@@ -213,14 +213,14 @@ class Equilizer(QMainWindow):
         # self.slices_sliders = {
         #     self.ui.drums_slider: "drums",
         #     self.ui.flute_slider: "flute",  
-        #     self.ui.guitar_slider: "cello",
+        #     self.ui.drums_slider: "cello",
         #     self.ui.zebra_slider: "cro",
         #     # self.ui.birds_slider: "birds",
         #     # self.ui.frog_slider: "frog",
         #     # self.trumpet_slider: "trumpet",
         #     self.ui.Saxophone_slider: "Saxophone",
         #     self.ui.drums_slider: "drums",
-        #     self.ui.guitar_slider: "Guitar",
+        #     self.ui.drums_slider: "drums",
         #     self.ui.Violin_slider: "Violin",
         # }
        
@@ -503,8 +503,8 @@ class Equilizer(QMainWindow):
         #animal mode
         self.ui.drums_slider.setValue(100)
         self.ui.flute_slider.setValue(100)
-        self.ui.guitar_slider.setValue(100)
-        self.ui.cow_slider.setValue(100)
+        self.ui.drums_slider.setValue(100)
+        self.ui.bear_slider.setValue(100)
         self.ui.birds_slider.setValue(100)
 
         #uniform mode
@@ -520,7 +520,7 @@ class Equilizer(QMainWindow):
         self.ui.uniform_slider_10.setValue(100)
 
         #musical mode
-        self.ui.guitar_slider.setValue(100)
+        self.ui.drums_slider.setValue(100)
         self.ui.Violin_slider.setValue(100)
         self.ui.drums_slider.setValue(100)
         self.ui.Saxophone_slider.setValue(100)
@@ -751,8 +751,8 @@ class Equilizer(QMainWindow):
         if not self.data.any():
             return
         self.equalized_signal = np.zeros_like(self.data, dtype=np.float32)
-        if instrument=="Guitar":
-            print("Guitar")
+        if instrument=="drums":
+            print("drums")
         elif instrument=="Violin":
             print("Violin")
         elif instrument=="Drums":
@@ -769,61 +769,62 @@ class Equilizer(QMainWindow):
         self.plot_frequency_graph()
         self.equalized_spectrogram_viewer.update_spectrogram(self.equalized_signal, mode="Musical Mode")
 
-    # def update_animal(self, animal):
-    #     if not self.data.any():
-    #         return
-    #     slider_value = self.animal_sliders[animal].value() / 100
-    #     self.equalized_signal = np.zeros_like(self.data, dtype=np.float32)
-        
-    #     for Animal, _ in self.animal_ranges.items():
-    #         print(self.animal_sliders[Animal].value())
-    #         animal_slider_value = self.animal_sliders[Animal].value() / 100
-    #         self.equalized_signal += animal_slider_value * self.filtered_data[Animal]
-        
-        
-
-    #     self.state = True
-    #     self.plot_frequency_graph()
-    #     self.equalized_spectrogram_viewer.update_spectrogram(self.equalized_signal,mode="Animal Mode")
     def update_animal(self, animal):
         if not self.data.any():
             return
-        
         slider_value = self.animal_sliders[animal].value() / 100
         self.equalized_signal = np.zeros_like(self.data, dtype=np.float32)
-
-        # This will store the most recent (lowest) value for each frequency range
-        applied_values = {}
-
+        
         for Animal, _ in self.animal_ranges.items():
             print(self.animal_sliders[Animal].value())
             animal_slider_value = self.animal_sliders[Animal].value() / 100
-
-            # Determine the overlapping frequency ranges
-            animal_range = self.animal_ranges[Animal]
-            current_range = self.animal_ranges[animal]
-            
-            # Check if there is an overlap between current animal range and any other range
-            overlap_found = False
-            for freq in range(animal_range[0], animal_range[1]):
-                if freq >= current_range[0] and freq <= current_range[1]:
-                    overlap_found = True
-                    break
-            
-            # If there is overlap, choose the lower slider value for the frequency range
-            if overlap_found:
-                # Apply the lower slider value for the overlapping frequency
-                applied_values[animal_range] = min(applied_values.get(animal_range, float('inf')), animal_slider_value)
-            else:
-                # Apply the slider value normally if there's no overlap
-                applied_values[animal_range] = animal_slider_value
-            
-            # Add the equalized signal for the current animal
-            self.equalized_signal += applied_values[animal_range] * self.filtered_data[Animal]
+            self.equalized_signal += animal_slider_value * self.filtered_data[Animal]
+        
+        
 
         self.state = True
         self.plot_frequency_graph()
-        self.equalized_spectrogram_viewer.update_spectrogram(self.equalized_signal, mode="Animal Mode")
+        self.equalized_spectrogram_viewer.update_spectrogram(self.equalized_signal,mode="Animal Mode")
+    
+    # def update_animal(self, animal):
+    #     if not self.data.any():
+    #         return
+        
+    #     slider_value = self.animal_sliders[animal].value() / 100
+    #     self.equalized_signal = np.zeros_like(self.data, dtype=np.float32)
+
+    #     # This will store the most recent (lowest) value for each frequency range
+    #     applied_values = {}
+
+    #     for Animal, _ in self.animal_ranges.items():
+    #         print(self.animal_sliders[Animal].value())
+    #         animal_slider_value = self.animal_sliders[Animal].value() / 100
+
+    #         # Determine the overlapping frequency ranges
+    #         animal_range = self.animal_ranges[Animal]
+    #         current_range = self.animal_ranges[animal]
+            
+    #         # Check if there is an overlap between current animal range and any other range
+    #         overlap_found = False
+    #         for freq in range(animal_range[0], animal_range[1]):
+    #             if freq >= current_range[0] and freq <= current_range[1]:
+    #                 overlap_found = True
+    #                 break
+            
+    #         # If there is overlap, choose the lower slider value for the frequency range
+    #         if overlap_found:
+    #             # Apply the lower slider value for the overlapping frequency
+    #             applied_values[animal_range] = min(applied_values.get(animal_range, float('inf')), animal_slider_value)
+    #         else:
+    #             # Apply the slider value normally if there's no overlap
+    #             applied_values[animal_range] = animal_slider_value
+            
+    #         # Add the equalized signal for the current animal
+    #         self.equalized_signal += applied_values[animal_range] * self.filtered_data[Animal]
+
+    #     self.state = True
+    #     self.plot_frequency_graph()
+    #     self.equalized_spectrogram_viewer.update_spectrogram(self.equalized_signal, mode="Animal Mode")
 
 
     def control_sound(self, btn):
@@ -910,7 +911,7 @@ class Equilizer(QMainWindow):
             return
             
         elif mode == "Animal Mode":
-            self.ui.frequency_graphics_view.setLimits(xMin = 0, xMax = 8000) 
+            self.ui.frequency_graphics_view.setLimits(xMin = 0, xMax = 6000) 
             mode_sliders = self.animal_sliders
             mode_ranges = self.animal_ranges
 

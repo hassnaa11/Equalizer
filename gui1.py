@@ -611,6 +611,7 @@ class Ui_MainWindow(object):
         self.horizontalLayout_3.setContentsMargins(0, 0, 0, 0)
         self.horizontalLayout_3.setSpacing(0)
         self.horizontalLayout_3.setObjectName("horizontalLayout_3")
+        
         self.original_spectro_frame = QtWidgets.QFrame(self.spectro_frame)
         self.gridLayout_2 = QtWidgets.QGridLayout(self.original_spectro_frame)
         self.gridLayout_2.setContentsMargins(0, 0, 0, 0)
@@ -635,7 +636,7 @@ class Ui_MainWindow(object):
         self.frequency_frame.setFrameShadow(QtWidgets.QFrame.Raised)
         self.frequency_frame.setObjectName("frequency_frame")
         self.gridLayout = QtWidgets.QGridLayout(self.frequency_frame)
-        self.gridLayout.setContentsMargins( 0, 20, 0, 10)
+        self.gridLayout.setContentsMargins( 20, 20, 20, 10)
         self.gridLayout.setSpacing(0)
         self.gridLayout.setObjectName("gridLayout")
         # self.frequency_graphics_view = QtWidgets.QGraphicsView(self.frequency_frame)
@@ -755,18 +756,18 @@ class Ui_MainWindow(object):
         self.horizontalLayout_13.setObjectName("horizontalLayout_13")
         spacerItem6 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_13.addItem(spacerItem6)
-        self.cow_slider = QtWidgets.QSlider(self.animals_sliders_frame)
-        self.cow_slider.setCursor(QtGui.QCursor(QtCore.Qt.OpenHandCursor))
-        self.cow_slider.setMinimum(0)
-        self.cow_slider.setMaximum(200)
-        self.cow_slider.setValue(100)
-        self.cow_slider.setSingleStep(10)
-        self.cow_slider.setPageStep(10)
-        self.cow_slider.setProperty("value", 0)
-        self.cow_slider.setSliderPosition(0)
-        self.cow_slider.setOrientation(QtCore.Qt.Vertical)
-        self.cow_slider.setObjectName("cow_slider")
-        self.horizontalLayout_13.addWidget(self.cow_slider)
+        self.bear_slider = QtWidgets.QSlider(self.animals_sliders_frame)
+        self.bear_slider.setCursor(QtGui.QCursor(QtCore.Qt.OpenHandCursor))
+        self.bear_slider.setMinimum(0)
+        self.bear_slider.setMaximum(200)
+        self.bear_slider.setValue(100)
+        self.bear_slider.setSingleStep(10)
+        self.bear_slider.setPageStep(10)
+        self.bear_slider.setProperty("value", 0)
+        self.bear_slider.setSliderPosition(0)
+        self.bear_slider.setOrientation(QtCore.Qt.Vertical)
+        self.bear_slider.setObjectName("bear_slider")
+        self.horizontalLayout_13.addWidget(self.bear_slider)
         spacerItem7 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_13.addItem(spacerItem7)
         self.verticalLayout_3.addLayout(self.horizontalLayout_13)
@@ -829,18 +830,18 @@ class Ui_MainWindow(object):
         self.horizontalLayout_11.setObjectName("horizontalLayout_11")
         spacerItem10 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_11.addItem(spacerItem10)
-        self.guitar2_slider = QtWidgets.QSlider(self.animals_sliders_frame)
-        self.guitar2_slider.setCursor(QtGui.QCursor(QtCore.Qt.OpenHandCursor))
-        self.guitar2_slider.setMinimum(0)
-        self.guitar2_slider.setMaximum(200)
-        self.guitar2_slider.setValue(100)
-        self.guitar2_slider.setSingleStep(10)
-        self.guitar2_slider.setPageStep(10)
-        self.guitar2_slider.setProperty("value", 0)
-        self.guitar2_slider.setSliderPosition(0)
-        self.guitar2_slider.setOrientation(QtCore.Qt.Vertical)
-        self.guitar2_slider.setObjectName("guitar2_slider")
-        self.horizontalLayout_11.addWidget(self.guitar2_slider)
+        self.drums2_slider = QtWidgets.QSlider(self.animals_sliders_frame)
+        self.drums2_slider.setCursor(QtGui.QCursor(QtCore.Qt.OpenHandCursor))
+        self.drums2_slider.setMinimum(0)
+        self.drums2_slider.setMaximum(200)
+        self.drums2_slider.setValue(100)
+        self.drums2_slider.setSingleStep(10)
+        self.drums2_slider.setPageStep(10)
+        self.drums2_slider.setProperty("value", 0)
+        self.drums2_slider.setSliderPosition(0)
+        self.drums2_slider.setOrientation(QtCore.Qt.Vertical)
+        self.drums2_slider.setObjectName("drums2_slider")
+        self.horizontalLayout_11.addWidget(self.drums2_slider)
         spacerItem11 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_11.addItem(spacerItem11)
         self.verticalLayout_6.addLayout(self.horizontalLayout_11)
@@ -991,6 +992,11 @@ class Ui_MainWindow(object):
         self.pushButton_8.setIcon(icon14)
         self.pushButton_8.setIconSize(QtCore.QSize(40, 40))
         self.pushButton_8.setFlat(True)
+        self.pushButton_8.setStyleSheet("""
+                background: transparent;
+                border: none;
+                outline: none;
+                """)    
         self.pushButton_8.setObjectName("pushButton_8")
         self.verticalLayout_12.addWidget(self.pushButton_8)
         self.horizontalLayout_6.addLayout(self.verticalLayout_12)
@@ -1024,6 +1030,11 @@ class Ui_MainWindow(object):
         self.pushButton_9.setIcon(icon15)
         self.pushButton_9.setIconSize(QtCore.QSize(40, 40))
         self.pushButton_9.setFlat(True)
+        self.pushButton_9.setStyleSheet("""
+                background: transparent;
+                border: none;
+                outline: none;
+                """)
         self.pushButton_9.setObjectName("pushButton_9")
         self.verticalLayout_11.addWidget(self.pushButton_9)
         self.horizontalLayout_6.addLayout(self.verticalLayout_11)
@@ -1057,6 +1068,11 @@ class Ui_MainWindow(object):
         self.pushButton_12.setIcon(QtGui.QIcon(f"/icons/icons/drums2.png"))
         self.pushButton_12.setIconSize(QtCore.QSize(40, 40))
         self.pushButton_12.setFlat(True)
+        self.pushButton_12.setStyleSheet("""
+                background: transparent;
+                border: none;
+                outline: none;
+                """)
         self.pushButton_12.setObjectName("pushButton_12")
         self.verticalLayout_16.addWidget(self.pushButton_12)
         self.horizontalLayout_6.addLayout(self.verticalLayout_16)
@@ -1085,6 +1101,11 @@ class Ui_MainWindow(object):
         self.pushButton_10 = QtWidgets.QPushButton(self.music_sliders_frame)
         self.pushButton_10.setEnabled(False)
         self.pushButton_10.setText("")
+        self.pushButton_10.setStyleSheet("""
+                background: transparent;
+                border: none;
+                outline: none;
+                """)
         # icon17 = QtGui.QIcon()
         # icon17.addPixmap(QtGui.QPixmap(":/icons/icons/saxophone.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.pushButton_10.setIcon(QtGui.QIcon(f"icons/icons/saxophone.png"))
