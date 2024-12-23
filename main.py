@@ -78,45 +78,31 @@ class Equilizer(QMainWindow):
         self.chunk_size = 3000
         self.ui.pushButton_12.setIcon(QIcon(f'icons/icons/drums2.png'))
 
-        self.ui.drums_slider.valueChanged.connect(
-            lambda: self.update_instrument("drums")
-        )
-        self.ui.Violin_slider.valueChanged.connect(
-            lambda: self.update_instrument("Violin")
-        )
-        self.ui.drums_slider.valueChanged.connect(
-            lambda: self.update_instrument("Drums")
-        )
-        self.ui.Saxophone_slider.valueChanged.connect(
-            lambda: self.update_instrument("Saxophone")
-        )
+        self.ui.drums_slider.valueChanged.connect( lambda: self.update_instrument("drums"))
+        self.ui.Saxophone_slider.valueChanged.connect(lambda: self.update_instrument("Saxophone"))
+        self.ui.Violin_slider.valueChanged.connect(lambda: self.update_instrument("E"))
+        self.ui.guitar_slider.valueChanged.connect(lambda: self.update_instrument("A"))
+        self.ui.new_slider.valueChanged.connect(lambda: self.update_instrument("O"))
+
         self.ui.open_btn.clicked.connect(self.open_file)
-        self.ui.original_sound_btn.clicked.connect(
-            lambda: self.control_sound("original_btn")
-        )
-        self.ui.equalized_sound_btn.clicked.connect(
-            lambda: self.control_sound("equalized_btn")
-        )
+        self.ui.original_sound_btn.clicked.connect(lambda: self.control_sound("original_btn"))
+        self.ui.equalized_sound_btn.clicked.connect(lambda: self.control_sound("equalized_btn"))
+
         self.sliders = {
             "drums": self.ui.drums_slider,
             "Saxophone": self.ui.Saxophone_slider,
-            "Drums": self.ui.drums_slider,
-            "Violin": self.ui.Violin_slider,
+            "A": self.ui.guitar_slider,
+            "E": self.ui.Violin_slider,
+            "O": self.ui.new_slider,
         }
         self.instruments = {
-            # "drums": (80, 1500),
-            # "Violin": (1500, 3000),
-            # "Drums": (3000, 5000),
-            # "Saxophone": (5000,8000),
-            
-            "drums": (20, 500),
-            "Violin": (500, 2000),
-            "Drums": (2000, 5000),
-            "Saxophone": (5000,16000),
-            
+            "drums": [(250,650)],
+            "Saxophone": [(3000, 6000)], 
+            "O": [(0, 250)],
+            "A": [(650, 2200)],
+            "E": [(0,250),(650,2200)],     
         }
-        # end of music
-
+       
         # animal mode
         self.animal_sliders = {
             "drums": self.ui.drums2_slider,
@@ -210,35 +196,10 @@ class Equilizer(QMainWindow):
         self.ui.uniform_slider_9.valueChanged.connect(self.update_uniform_slider)
         self.ui.uniform_slider_10.valueChanged.connect(self.update_uniform_slider)
         
-        # self.slices_sliders = {
-        #     self.ui.drums_slider: "drums",
-        #     self.ui.flute_slider: "flute",  
-        #     self.ui.drums_slider: "cello",
-        #     self.ui.zebra_slider: "cro",
-        #     # self.ui.birds_slider: "birds",
-        #     # self.ui.frog_slider: "frog",
-        #     # self.trumpet_slider: "trumpet",
-        #     self.ui.Saxophone_slider: "Saxophone",
-        #     self.ui.drums_slider: "drums",
-        #     self.ui.drums_slider: "drums",
-        #     self.ui.Violin_slider: "Violin",
-        # }
-       
         self.ui.mode_comboBox.currentTextChanged.connect(self.change_sliders_for_modes)
         
         self.show_spectrograms = True
         self.sampling_rate = 44100  
-
-
-        # self.equalized_spectrogram_viewer = pg.ImageView()
-        # self.ui.equalized_spectro_frame.layout().addWidget(self.equalized_spectrogram_viewer)
-
-        # # Add grid functionality by placing the ImageView in a PlotWidget
-        # self.plot_item = pg.PlotWidget()
-        # self.plot_item.showGrid(x=True, y=True)  # Enable the grid
-        # self.plot_item.addItem(self.equalized_spectrogram_viewer.getImageItem())  # Add the image item to PlotWidget
-        # self.ui.equalized_spectro_frame.layout().addWidget(self.plot_item)
-
 
         self.original_spectrogram_viewer = SpectrogramViewer(self.ui.original_spectro_graphics_view, self.sampling_rate)
         self.equalized_spectrogram_viewer = SpectrogramViewer(self.ui.equalized_spectro_graphics_view, self.sampling_rate)
@@ -522,8 +483,10 @@ class Equilizer(QMainWindow):
         #musical mode
         self.ui.drums_slider.setValue(100)
         self.ui.Violin_slider.setValue(100)
-        self.ui.drums_slider.setValue(100)
+        self.ui.guitar_slider.setValue(100)
         self.ui.Saxophone_slider.setValue(100)
+        self.ui.new_slider.setValue(100)
+
 
 
     def set_home_view(self):
@@ -563,10 +526,12 @@ class Equilizer(QMainWindow):
             print(self.file_name)
             self.ui.play_pause_btn.setIcon(QIcon(f'icons/icons/pause copy.svg'))
 
+             
     def plot_original_data(self):
         self.fs, self.data = wav.read(self.file_name)  
         if self.data.ndim > 1:
             self.data = self.data.flatten() 
+        self.data = self.data.astype(np.float32)  # Ensure data is in float32 for consistency
         print(f"Sample rate of the file: {self.fs}")
         self.cumulative_time = []  # Reset cumulative time
         self.cumulative_data = []  # Reset cumulative data
@@ -604,10 +569,10 @@ class Equilizer(QMainWindow):
 
         self.filtered_data = {}
         if mode == "Musical Mode":
-            for instrument, (low, high) in self.instruments.items():
-                self.filtered_data[instrument] = bandpass_filter(
-                    self.data, low, high, self.fs
-                )
+            for instrument, ranges in self.instruments.items():
+                self.filtered_data[instrument] = np.zeros_like(self.data, dtype=np.float32)
+                for low, high in ranges:
+                    self.filtered_data[instrument] += bandpass_filter(self.data, low, high, self.fs).astype(np.float32)
                 print(self.filtered_data)
             if not self.isreplayed:
                 self.equalized_spectrogram_viewer.update_spectrogram(self.data, mode = "Musical Mode")
@@ -616,7 +581,7 @@ class Equilizer(QMainWindow):
             for slider_number, (low, high) in self.uniform_ranges.items():
                 self.filtered_data[slider_number] = bandpass_filter(
                     self.data, low, high, self.fs
-                )
+                ).astype(np.float32)
                 print(self.filtered_data)
             if not self.isreplayed:
                 self.equalized_spectrogram_viewer.update_spectrogram(self.data, mode == "Uniform Mode")
@@ -624,12 +589,10 @@ class Equilizer(QMainWindow):
             for animal, (low, high) in self.animal_ranges.items():
                 self.filtered_data[animal] = bandpass_filter(
                     self.data, low, high, self.fs
-                )
+                ).astype(np.float32)
                 print(self.filtered_data)
             if not self.isreplayed:
                 self.equalized_spectrogram_viewer.update_spectrogram(self.data, mode == "Animal Mode")
-             
-
 
     def update_plot(self):
         if not self.data.any():
@@ -753,17 +716,29 @@ class Equilizer(QMainWindow):
         self.equalized_signal = np.zeros_like(self.data, dtype=np.float32)
         if instrument=="drums":
             print("drums")
-        elif instrument=="Violin":
-            print("Violin")
-        elif instrument=="Drums":
-            print("Drums")
         elif instrument=="Saxophone":
             print("Saxophone")
-
-        for inst, _ in self.instruments.items():
-            print(self.sliders[inst].value())
+        elif instrument=="E":
+            print("E")
+        elif instrument=="A":
+            print("A")
+        elif instrument=="O":
+            print("O")
+        
+        for inst, ranges in self.instruments.items():
             instrument_slider_value = self.sliders[inst].value() / 100
-            self.equalized_signal += instrument_slider_value * self.filtered_data[inst]
+
+            # Handle multiple ranges for an instrument
+            for low, high in ranges:
+                filtered_signal = bandpass_filter(self.data, low, high, self.fs)
+                self.equalized_signal += instrument_slider_value * filtered_signal
+
+
+        # for inst, ranges in self.instruments.items():
+        #     print(self.sliders[inst].value())
+        #     instrument_slider_value = self.sliders[inst].value() / 100
+            
+        #     self.equalized_signal += instrument_slider_value * self.filtered_data[inst]
 
         self.state = True
         self.plot_frequency_graph()
@@ -881,77 +856,89 @@ class Equilizer(QMainWindow):
         # normalize the magnitude
         self.original_magnitude = self.original_magnitude / np.max(self.original_magnitude)
 
-    
+
     def plot_frequency_graph(self):
         if not self.data.any():
             return
         self.magnitude = self.original_magnitude.copy()
         self.positive_magnitude = np.zeros_like(self.magnitude)
-        
-        mode = self.ui.mode_comboBox.currentText()
-        if mode == "Uniform Mode":
-            self.ui.frequency_graphics_view.setLimits(xMin=1050, xMax=2100)
-            mode_sliders = self.uniform_sliders
-            mode_ranges = self.uniform_ranges
 
-        elif mode == "Musical Mode":
+        mode = self.ui.mode_comboBox.currentText()
+        if mode == "Musical Mode":
             self.ui.frequency_graphics_view.setLimits(xMin=0, xMax=8000)
             mode_sliders = self.sliders
             mode_ranges = self.instruments
 
-        elif mode == "Weiner Filter":
-            self.ui.frequency_graphics_view.setLimits(xMin=0, xMax=8000, yMin = np.min(self.original_magnitude), yMax = np.max(self.original_magnitude))
-            
-            # frequency graph limits
-            self.ui.frequency_graphics_view.clear()
-            if self.is_audiogram:
-                self.plot_audiogram_scale(self.positive_freqs, self.original_magnitude)
-            else:
-                self.ui.frequency_graphics_view.plot(self.positive_freqs, self.original_magnitude)
-            return
-            
-        elif mode == "Animal Mode":
-            self.ui.frequency_graphics_view.setLimits(xMin = 0, xMax = 6000) 
-            mode_sliders = self.animal_sliders
-            mode_ranges = self.animal_ranges
+            for slider_number, slider in mode_sliders.items():
+                slider_value = slider.value() / 100
+                ranges = mode_ranges[slider_number]
 
-        for slider_number, slider in mode_sliders.items():
-            slider_value = slider.value() / 100
-            low, high = mode_ranges[slider_number]
+                # Handle multiple ranges
+                for low, high in ranges:
+                    # Find indices corresponding to this slider's range
+                    indices_in_range = np.where((self.positive_freqs >= low) & (self.positive_freqs < high))[0]
 
-            if mode == "Musical Mode":
-                low /= 2
-                high /= 2
+                    # Apply maximum of the current value and the slider-adjusted magnitude
+                    self.positive_magnitude[indices_in_range] = np.maximum(
+                        self.positive_magnitude[indices_in_range],
+                        self.magnitude[indices_in_range] * slider_value
+                    )
 
-            # find indices corresponding to this slider's range
-            indices_in_range = np.where((self.positive_freqs >= low) & (self.positive_freqs < high))[0]
+        else:
+            # Logic for other modes remains unchanged
+            if mode == "Uniform Mode":
+                self.ui.frequency_graphics_view.setLimits(xMin=1050, xMax=2100)
+                mode_sliders = self.uniform_sliders
+                mode_ranges = self.uniform_ranges
 
-            # apply maximum of the current value and the slider adjusted magnitude
-            self.positive_magnitude[indices_in_range] = np.maximum(
-                self.positive_magnitude[indices_in_range],
-                self.magnitude[indices_in_range] * slider_value
-            )
+            elif mode == "Weiner Filter":
+                self.ui.frequency_graphics_view.setLimits(xMin=0, xMax=8000, yMin=np.min(self.original_magnitude),
+                                                          yMax=np.max(self.original_magnitude))
+                self.ui.frequency_graphics_view.clear()
+                if self.is_audiogram:
+                    self.plot_audiogram_scale(self.positive_freqs, self.original_magnitude)
+                else:
+                    self.ui.frequency_graphics_view.plot(self.positive_freqs, self.original_magnitude)
+                return
 
-        # make them 1D array
+            elif mode == "Animal Mode":
+                self.ui.frequency_graphics_view.setLimits(xMin=0, xMax=6000)
+                mode_sliders = self.animal_sliders
+                mode_ranges = self.animal_ranges
+
+            for slider_number, slider in mode_sliders.items():
+                slider_value = slider.value() / 100
+                low, high = mode_ranges[slider_number]
+
+                # Find indices corresponding to this slider's range
+                indices_in_range = np.where((self.positive_freqs >= low) & (self.positive_freqs < high))[0]
+
+                # Apply maximum of the current value and the slider-adjusted magnitude
+                self.positive_magnitude[indices_in_range] = np.maximum(
+                    self.positive_magnitude[indices_in_range],
+                    self.magnitude[indices_in_range] * slider_value
+                )
+
+        # Make them 1D arrays
         frequencies_array = np.ravel(np.array(self.positive_freqs))
         magnitude_array = np.ravel(np.array(self.positive_magnitude))
 
-        # trim the arrays to be the same length
+        # Trim the arrays to be the same length
         min_length = min(len(frequencies_array), len(magnitude_array))
         frequencies_array = frequencies_array[:min_length]
         magnitude_array = magnitude_array[:min_length]
 
-        # frequency graph limits
-        self.ui.frequency_graphics_view.setLimits(yMin = np.min(magnitude_array), yMax = 4.1)
-                
+        # Frequency graph limits
+        self.ui.frequency_graphics_view.setLimits(yMin=np.min(magnitude_array), yMax=4.1)
+
         self.ui.frequency_graphics_view.clear()
-        
+
         # Plot in linear scale by default
         if self.is_audiogram:
             self.plot_audiogram_scale(frequencies_array, magnitude_array)
         else:
             self.ui.frequency_graphics_view.plot(frequencies_array, magnitude_array)
-        
+
         self.phases = np.ravel(np.array(self.phases))
         self.phases = self.phases[:min_length]
 
@@ -961,7 +948,7 @@ class Equilizer(QMainWindow):
         # Take real part of the signal
         real_signal = np.real(self.time_domain_signal_modified)
 
-        real_signal /= np.max(np.abs(real_signal))  
+        real_signal /= np.max(np.abs(real_signal))
 
         # Handle the previous file safely
         previous_audio_file = f"temp_audio{self.c-1}.wav"
@@ -969,7 +956,7 @@ class Equilizer(QMainWindow):
             print(f"Removing existing file: {previous_audio_file}")
             os.remove(previous_audio_file)
 
-        # file for the equalized sound
+        # File for the equalized sound
         self.audio_file = tempfile.mktemp(suffix=".wav")
 
         # Write the audio file
