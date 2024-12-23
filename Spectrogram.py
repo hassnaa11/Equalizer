@@ -45,7 +45,7 @@ class MplCanvas(Canvas):
         self.axes.spines['top'].set_visible(False)
         self.axes.spines['bottom'].set_color('w')
 
-    def plot_spectrogram(self, signal, fs, mode="Uniform Mode"):
+    def plot_spectrogram(self, signal, fs, mode):
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=UserWarning)
             warnings.filterwarnings("ignore", category=RuntimeWarning)

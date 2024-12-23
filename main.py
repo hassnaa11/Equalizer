@@ -105,18 +105,28 @@ class Equilizer(QMainWindow):
        
         # animal mode
         self.animal_sliders = {
-            "drums": self.ui.drums2_slider,
-            "cricket": self.ui.cricket_slider,
             "bear": self.ui.bear_slider,
+            "Cow": self.ui.extra_slider,
+            "Drums": self.ui.drums2_slider,
+            "frog": self.ui.extra2_slider,
             "flute": self.ui.flute_slider,
+            "zebra": self.ui.extra3_slider,
             "birds": self.ui.birds_slider,
+            "elephant": self.ui.extra4_slider,
+            "cricket": self.ui.cricket_slider,
         }
         self.animal_ranges = { 
-            "drums": (250,650),
-            "cricket": (3000, 6000), 
-            "bear": (0, 250),
-            "flute": (650, 2200),
-            "birds": (2200, 3000),      
+            "bear": (0, 110),
+            "Cow": (110, 450), 
+            "Drums": (450,500),
+            "frog": (500, 750),
+            "flute": (750, 850),
+            "zebra": (850, 2400),
+            "birds": (2400, 2600), 
+            "elephant": (2800, 4500),
+            "cricket": (4500, 6000), 
+               
+            
 }
 
         self.ui.pushButton_5.setIcon(QIcon(f'icons/icons/drums.png'))
@@ -127,7 +137,7 @@ class Equilizer(QMainWindow):
 
         self.ui.cricket_slider.valueChanged.connect(lambda: self.update_animal("cricket"))
         self.ui.flute_slider.valueChanged.connect(lambda: self.update_animal("flute"))
-        self.ui.drums2_slider.valueChanged.connect(lambda: self.update_animal("drums"))
+        self.ui.drums2_slider.valueChanged.connect(lambda: self.update_animal("Drums"))
         self.ui.bear_slider.valueChanged.connect(lambda: self.update_animal("bear"))
         self.ui.birds_slider.valueChanged.connect(lambda: self.update_animal("birds"))
         
@@ -462,9 +472,9 @@ class Equilizer(QMainWindow):
          
     def reset_sliders(self):
         #animal mode
-        self.ui.drums_slider.setValue(100)
+        self.ui.cricket_slider.setValue(100)
         self.ui.flute_slider.setValue(100)
-        self.ui.drums_slider.setValue(100)
+        self.ui.drums2_slider.setValue(100)
         self.ui.bear_slider.setValue(100)
         self.ui.birds_slider.setValue(100)
 
@@ -593,6 +603,10 @@ class Equilizer(QMainWindow):
                 print(self.filtered_data)
             if not self.isreplayed:
                 self.equalized_spectrogram_viewer.update_spectrogram(self.data, mode == "Animal Mode")
+        
+        
+             
+
 
     def update_plot(self):
         if not self.data.any():
@@ -747,7 +761,6 @@ class Equilizer(QMainWindow):
     def update_animal(self, animal):
         if not self.data.any():
             return
-        slider_value = self.animal_sliders[animal].value() / 100
         self.equalized_signal = np.zeros_like(self.data, dtype=np.float32)
         
         for Animal, _ in self.animal_ranges.items():
