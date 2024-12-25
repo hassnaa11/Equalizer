@@ -62,7 +62,7 @@ class MplCanvas(Canvas):
             elif mode == "Weiner Filter":
                 y_min, y_max = 0, 8000
             elif mode == "Animal Mode":
-                y_min, y_max = 0, 7000
+                y_min, y_max = 0, 18500
             else:
                 y_min, y_max = 0, 8000
 
