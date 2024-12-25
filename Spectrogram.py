@@ -18,7 +18,7 @@ class MplCanvas(Canvas):
         # plt.rcParams["figure.autolayout"] = True
 
         # Set the figure size (width, height). Adjust the height here.
-        self.figure = plt.figure(figsize=(5.11, 2))  # Decrease height (e.g., 6x4 inches)
+        self.figure = plt.figure(figsize=(5.2, 4))  # Decrease height (e.g., 6x4 inches)
         self.figure.patch.set_facecolor('#000000')
         self.axes = self.figure.add_subplot()
         super().__init__(self.figure)
@@ -62,7 +62,7 @@ class MplCanvas(Canvas):
             elif mode == "Weiner Filter":
                 y_min, y_max = 0, 8000
             elif mode == "Animal Mode":
-                y_min, y_max = 0, 6000
+                y_min, y_max = 0, 7000
             else:
                 y_min, y_max = 0, 8000
 

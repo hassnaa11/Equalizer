@@ -130,15 +130,15 @@ class Equilizer(QMainWindow):
             "cricket": self.ui.cricket_slider,
         }
         self.animal_ranges = { 
-            "bear": (0, 110),
-            "Cow": (110, 450), 
-            "Drums": (450,500),
+            "bear": (0, 250),
+            "Cow": (250, 350), 
+            "Drums": (350,500),
             "frog": (500, 750),
-            "flute": (750, 850),
-            "zebra": (850, 2400),
-            "birds": (2400, 2600), 
-            "elephant": (2800, 4500),
-            "cricket": (4500, 6000), 
+            "flute": (750, 1200),
+            "zebra": (1200, 1500),
+            "birds": (1500, 2000), 
+            "elephant": (2000, 2500),
+            "cricket": (2500, 7000), 
                
             
 }
@@ -639,8 +639,6 @@ class Equilizer(QMainWindow):
             if not self.isreplayed:
                 self.equalized_spectrogram_viewer.update_spectrogram(self.data, mode == "Animal Mode")
         
-        
-             
 
 
     def update_plot(self):
@@ -781,21 +779,46 @@ class Equilizer(QMainWindow):
         self.plot_frequency_graph()
         self.equalized_spectrogram_viewer.update_spectrogram(self.equalized_signal, mode="Musical Mode")
 
-    def update_animal(self, animal):
-        if not self.data.any():
-            return
-        self.equalized_signal = np.zeros_like(self.data, dtype=np.float32)
+    # def update_animal(self, animal):
+    #     if not self.data.any():
+    #         return
+    #     self.equalized_signal = np.zeros_like(self.data, dtype=np.float64)
         
-        for Animal, _ in self.animal_ranges.items():
-            print(self.animal_sliders[Animal].value())
-            animal_slider_value = self.animal_sliders[Animal].value() / 100
-            self.equalized_signal += animal_slider_value * self.filtered_data[Animal]
+    #     for Animal, _ in self.animal_ranges.items():
+    #         print(self.animal_sliders[Animal].value())
+    #         animal_slider_value = self.animal_sliders[Animal].value() / 100
+    #         self.equalized_signal += animal_slider_value * self.filtered_data[Animal]
         
         
 
+    #     self.state = True
+    #     self.plot_frequency_graph()
+    #     self.equalized_spectrogram_viewer.update_spectrogram(self.equalized_signal,mode="Animal Mode")
+    
+    def update_animal(self, animal):
+        if not self.data.any():
+            return
+        self.equalized_signal = np.zeros_like(self.data, dtype=np.float64)
+        
+        for Animal, _ in self.animal_ranges.items():
+            slider_value = self.animal_sliders[Animal].value()
+            print(slider_value)
+            animal_slider_value = slider_value / 100
+            
+            if animal_slider_value is None or not isinstance(animal_slider_value, (int, float)):
+                print(f"Invalid slider value for {Animal}: {animal_slider_value}")
+                return
+            
+            if np.isnan(self.filtered_data[Animal]).any() or np.isinf(self.filtered_data[Animal]).any():
+                print(f"Invalid values found in filtered_data for {Animal}")
+                return
+            
+            self.equalized_signal += animal_slider_value * self.filtered_data[Animal]
+
         self.state = True
         self.plot_frequency_graph()
-        self.equalized_spectrogram_viewer.update_spectrogram(self.equalized_signal,mode="Animal Mode")
+        self.equalized_spectrogram_viewer.update_spectrogram(self.equalized_signal, mode="Animal Mode")
+
     
     # def update_animal(self, animal):
     #     if not self.data.any():
@@ -911,7 +934,7 @@ class Equilizer(QMainWindow):
             mode_ranges = self.instruments
             
         elif mode == "Animal Mode":
-            self.ui.frequency_graphics_view.setLimits(xMin = 0, xMax = 6000) 
+            self.ui.frequency_graphics_view.setLimits(xMin = 0, xMax = 7000) 
             mode_sliders = self.animal_sliders
             mode_ranges = self.animal_ranges
             
@@ -987,7 +1010,10 @@ class Equilizer(QMainWindow):
 
         # Write the audio file
         try:
-            sf.write(self.audio_file, real_signal.astype(np.float32), self.fs)
+            if mode == "Animal Mode":
+                sf.write(self.audio_file, real_signal.astype(np.float64), self.fs)
+            else:
+                sf.write(self.audio_file, real_signal.astype(np.float32), self.fs)
             print(f"Audio file written successfully: {self.audio_file}")
         except Exception as e:
             print(f"Error writing audio file: {e}")
