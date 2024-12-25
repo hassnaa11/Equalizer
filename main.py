@@ -105,10 +105,10 @@ class Equilizer(QMainWindow):
        
         # animal mode
         self.animal_sliders = {
-            "Guitar": self.ui.Guitar_slider,
+            "Snare": self.ui.Guitar_slider,
             # "Cow": self.ui.extra_slider,
             "frog": self.ui.frog_slider,
-            # "frog": self.ui.extra2_slider,
+            "horse": self.ui.extra2_slider,
             "flute": self.ui.flute_slider,
             # "zebra": self.ui.extra3_slider,
             "dog": self.ui.dog_slider,
@@ -118,13 +118,13 @@ class Equilizer(QMainWindow):
         self.animal_ranges = { 
             "dog":[(0, 300)],
             # "Cow": [(250, 350)], 
-            "flute": [(650,1600)],
-            # "frog": [(500, 750)],
-            "Guitar":[(1600, 2500)],
+            "flute": [(650,900)],
+            "horse": [(900, 1500)],
+            "Snare":[(1500, 2700)],
             # "zebra": [(1200, 1500)],
             "frog": [(300, 650)], 
-            "elephant": [(2500, 4000)],
-            "cricket": [(4000, 18500)], 
+            "elephant": [(2700, 4500)],
+            "cricket": [(4500, 18500)], 
                
             
 }
@@ -132,13 +132,13 @@ class Equilizer(QMainWindow):
         self.ui.pushButton_5.setIcon(QIcon(f'icons/icons/frog-.png'))
         self.ui.pushButton_6.setIcon(QIcon(f'icons/icons/flute.png'))
         self.ui.pushButton_7.setIcon(QIcon(f'icons/icons/cricket.png'))
-        self.ui.pushButton_2.setIcon(QIcon(f'icons/icons/guitar.png'))
+        self.ui.pushButton_2.setIcon(QIcon(f'icons/icons/drums2.png'))
         self.ui.pushButton.setIcon(QIcon(f'icons/icons/dog.png'))
 
         self.ui.cricket_slider.valueChanged.connect(lambda: self.update_animal("cricket"))
         self.ui.flute_slider.valueChanged.connect(lambda: self.update_animal("flute"))
         self.ui.frog_slider.valueChanged.connect(lambda: self.update_animal("frog"))
-        self.ui.Guitar_slider.valueChanged.connect(lambda: self.update_animal("Guitar"))
+        self.ui.Guitar_slider.valueChanged.connect(lambda: self.update_animal("Snare"))
         self.ui.dog_slider.valueChanged.connect(lambda: self.update_animal("dog"))
         
         self.ui.cricket_slider.setValue(100)
