@@ -76,27 +76,34 @@ class Equilizer(QMainWindow):
         self.data = np.array([])  # Holds the audio data
         self.index = 0
         self.chunk_size = 3000
-        self.ui.pushButton_12.setIcon(QIcon(f'icons/icons/frog2.png'))
+        self.ui.pushButton_12.setIcon(QIcon(f'icons/icons/drums2.png'))
 
-        self.ui.frog_slider.valueChanged.connect( lambda: self.update_instrument("frog"))
+        self.ui.drums_slider.valueChanged.connect( lambda: self.update_instrument("drums"))
         self.ui.Saxophone_slider.valueChanged.connect(lambda: self.update_instrument("Saxophone"))
         self.ui.Violin_slider.valueChanged.connect(lambda: self.update_instrument("E"))
         self.ui.guitar_slider.valueChanged.connect(lambda: self.update_instrument("A"))
         self.ui.new_slider.valueChanged.connect(lambda: self.update_instrument("O"))
+        
+        self.ui.pushButton_12.setIcon(QIcon(f'icons/icons/drums2.png'))
+        self.ui.pushButton_10.setIcon(QIcon(f'icons/icons/saxophone.png'))
+        self.ui.pushButton_9.setText("E")
+        self.ui.pushButton_18.setText("O")
+        self.ui.pushButton_15.setText("A")
+        
 
         self.ui.open_btn.clicked.connect(self.open_file)
         self.ui.original_sound_btn.clicked.connect(lambda: self.control_sound("original_btn"))
         self.ui.equalized_sound_btn.clicked.connect(lambda: self.control_sound("equalized_btn"))
 
         self.sliders = {
-            "frog": self.ui.frog_slider,
+            "drums": self.ui.drums_slider,
             "Saxophone": self.ui.Saxophone_slider,
             "A": self.ui.guitar_slider,
             "E": self.ui.Violin_slider,
             "O": self.ui.new_slider,
         }
         self.instruments = {
-            "frog": [(250,650)],
+            "drums": [(250,650)],
             "Saxophone": [(3000, 6000)], 
             "O": [(0, 250)],
             "A": [(650, 2200)],
@@ -170,7 +177,7 @@ class Equilizer(QMainWindow):
             "Uniform Mode": self.ui.uniform_sliders_frame,
             "Animal Mode": self.ui.animals_sliders_frame,
             "Musical Mode": self.ui.music_sliders_frame,
-            "Weiner Filter": self.ui.ecg_sliders_frame,
+            "Wiener Filter": self.ui.ecg_sliders_frame,
         }
         for sliders_frame in self.sliders_frames:
             self.sliders_frames[sliders_frame].setVisible(False)
@@ -244,8 +251,8 @@ class Equilizer(QMainWindow):
         self.c = 0
         self.isreplayed = False
         
-        # Weiner Filter 
-        self.weiner = WeinerFilter()
+        # Wiener Filter 
+        self.Wiener = WeinerFilter()
         self.rect_roi = pg.RectROI([0, -0.25], [0.2, 1.4], pen='r')
         self.rect_roi.addScaleHandle([1, 0.5], [0.5, 0.5]) 
         self.selected_range = None 
@@ -319,7 +326,7 @@ class Equilizer(QMainWindow):
             self.data = self.data[:, 0]
         if noise_signal.ndim > 1:
             noise_signal = noise_signal[:, 0]
-        self.audio_file, self.equalized_signal = self.weiner.apply_wiener_filter(self.data, noise_signal, fs)
+        self.audio_file, self.equalized_signal = self.Wiener.apply_wiener_filter(self.data, noise_signal, fs)
         print(self.equalized_signal) 
         self.ui.equalized_graphics_view.clear()
         if os.path.exists(self.audio_file):
@@ -328,7 +335,7 @@ class Equilizer(QMainWindow):
         if self.play_equalized_audio:
             self.player.setMedia(QMediaContent(QUrl.fromLocalFile(self.audio_file)))
             
-        self.equalized_spectrogram_viewer.update_spectrogram(self.equalized_signal[:2000], mode="Weiner Filter")    
+        self.equalized_spectrogram_viewer.update_spectrogram(self.equalized_signal[:2000], mode="Wiener Filter")    
                         
 
     def zoom_in(self):
@@ -368,7 +375,7 @@ class Equilizer(QMainWindow):
     def stop(self):
         self.is_stopped = True
         mode = self.ui.mode_comboBox.currentText()
-        if mode == "Weiner Filter":
+        if mode == "Wiener Filter":
             self.ui.select_btn.show()
             self.ui.done_select_btn.show() 
         else:
@@ -512,7 +519,7 @@ class Equilizer(QMainWindow):
         self.ui.uniform_slider_10.setValue(100)
 
         #musical mode
-        self.ui.frog_slider.setValue(100)
+        self.ui.drums_slider.setValue(100)
         self.ui.Violin_slider.setValue(100)
         self.ui.guitar_slider.setValue(100)
         self.ui.Saxophone_slider.setValue(100)
@@ -534,7 +541,7 @@ class Equilizer(QMainWindow):
         for sliders_frame in self.sliders_frames:
             self.sliders_frames[sliders_frame].setVisible(False)
         self.sliders_frames[text].setVisible(True)
-        if text == "Weiner Filter":
+        if text == "Wiener Filter":
             self.ecg_mode_selected = True
             self.ui.original_graphics_view.xRange = [0, 1e3]
             self.ui.original_graphics_view.yRange = [-2, 2]
@@ -597,7 +604,7 @@ class Equilizer(QMainWindow):
             self.data = self.data[:, 0]
     
         self.original_spectrogram_viewer.update_spectrogram(self.data[: self.chunk_size], mode = mode)
-        if mode != "Weiner Filter":
+        if mode != "Wiener Filter":
             self.equalized_spectrogram_viewer.update_spectrogram(self.data[: self.chunk_size], mode = mode)
 
         self.filtered_data = {}
@@ -642,7 +649,7 @@ class Equilizer(QMainWindow):
         self.cumulative_time.extend(time_chunk)
         self.cumulative_data.extend(chunk)
 
-        # if mode == "Weiner Filter":
+        # if mode == "Wiener Filter":
         #     return
 
         if self.index + self.chunk_size <= len(self.data):
@@ -863,7 +870,7 @@ class Equilizer(QMainWindow):
             return
         mode = self.ui.mode_comboBox.currentText()
         if btn == "equalized_btn":
-            if self.done_selection == False and mode == "Weiner Filter":
+            if self.done_selection == False and mode == "Wiener Filter":
                 self.audio_file = self.file_name
             self.play_equalized_audio = not self.play_equalized_audio
             if self.play_equalized_audio:
@@ -966,7 +973,7 @@ class Equilizer(QMainWindow):
                 mode_sliders = self.uniform_sliders
                 mode_ranges = self.uniform_ranges
 
-            elif mode == "Weiner Filter":
+            elif mode == "Wiener Filter":
                 self.ui.frequency_graphics_view.setLimits(xMin=0, xMax=8000, yMin=np.min(self.original_magnitude),
                                                           yMax=np.max(self.original_magnitude))
                 self.ui.frequency_graphics_view.clear()
@@ -1071,5 +1078,6 @@ class Equilizer(QMainWindow):
 if __name__ == "__main__":
     app = QApplication([])
     ui = Equilizer()
+    ui.setWindowTitle("Equalizer")
     ui.showMaximized()
     app.exec_()

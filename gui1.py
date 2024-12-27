@@ -1013,9 +1013,9 @@ class Ui_MainWindow(object):
         self.pushButton_7 = QtWidgets.QPushButton(self.animals_sliders_frame)
         self.pushButton_7.setEnabled(False)
         self.pushButton_7.setText("")
-        icon13 = QtGui.QIcon()
-        icon13.addPixmap(QtGui.QPixmap(":/icons/icons/wolf.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.pushButton_7.setIcon(icon13)
+        # icon13 = QtGui.QIcon()
+        # icon13.addPixmap(QtGui.QPixmap(":/icons/icons/wolf.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        # self.pushButton_7.setIcon(icon13)
         self.pushButton_7.setIconSize(QtCore.QSize(40, 40))
         self.pushButton_7.setCheckable(False)
         self.pushButton_7.setAutoFillBackground(False)
@@ -1042,9 +1042,7 @@ class Ui_MainWindow(object):
         self.music_sliders_frame.setObjectName("music_sliders_frame")
         self.horizontalLayout_6 = QtWidgets.QHBoxLayout(self.music_sliders_frame)
         self.horizontalLayout_6.setObjectName("horizontalLayout_6")
-        self.verticalLayout_12 = QtWidgets.QVBoxLayout()
-        self.verticalLayout_12.setSpacing(12)
-        self.verticalLayout_12.setObjectName("verticalLayout_12")
+        
 
         self.verticalLayout_17 = QtWidgets.QVBoxLayout()
         self.verticalLayout_17.setSpacing(12)
@@ -1067,8 +1065,30 @@ class Ui_MainWindow(object):
         self.guitar_slider.setOrientation(QtCore.Qt.Vertical)
         self.guitar_slider.setObjectName("guitar_slider")
         self.horizontalLayout_7.addWidget(self.guitar_slider)
+        spacerItem17 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_7.addItem(spacerItem17)
+        self.verticalLayout_17.addLayout(self.horizontalLayout_7)
+        self.pushButton_15 = QtWidgets.QPushButton(self.music_sliders_frame)
+        self.pushButton_15.setEnabled(False)
+        self.pushButton_15.setText("")
+        # icon16 = QtGui.QIcon()
+        # # icon16.addPixmap(QtGui.QPixmap(":/icons/icons/drums.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        # self.pushButton_15.setIcon(QtGui.QIcon(f"/icons/icons/drums2.png"))
+        # self.pushButton_15.setIconSize(QtCore.QSize(40, 40))
+        self.pushButton_15.setFlat(True)
+        self.pushButton_15.setStyleSheet("""
+                background: transparent;
+                border: none;
+                outline: none;
+                """)
+        self.pushButton_15.setObjectName("pushButton_15")
+        self.verticalLayout_17.addWidget(self.pushButton_15)
+        self.horizontalLayout_6.addLayout(self.verticalLayout_17)
+        
 
-
+        self.verticalLayout_12 = QtWidgets.QVBoxLayout()
+        self.verticalLayout_12.setSpacing(12)
+        self.verticalLayout_12.setObjectName("verticalLayout_12")
         self.horizontalLayout_22 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_22.setObjectName("horizontalLayout_22")
         spacerItem50 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
@@ -1085,44 +1105,63 @@ class Ui_MainWindow(object):
         self.new_slider.setOrientation(QtCore.Qt.Vertical)
         self.new_slider.setObjectName("new_slider")
         self.horizontalLayout_22.addWidget(self.new_slider)
-
-        spacerItem17 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout_7.addItem(spacerItem17)
-        self.verticalLayout_12.addLayout(self.horizontalLayout_7)
-
-
         spacerItem51 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_22.addItem(spacerItem51)
-        self.verticalLayout_17.addLayout(self.horizontalLayout_22)
-
-        self.pushButton_13 = QtWidgets.QPushButton(self.music_sliders_frame)
-        self.pushButton_13.setEnabled(False)
-        self.pushButton_13.setText("")
-        # icon14 = QtGui.QIcon()
-        # icon14.addPixmap(QtGui.QPixmap(":/icons/icons/guitar.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.pushButton_13.setIcon(icon13)
-        self.pushButton_13.setIconSize(QtCore.QSize(40, 40))
-        self.pushButton_13.setFlat(True)
-        self.pushButton_13.setObjectName("pushButton_13")
-        self.verticalLayout_17.addWidget(self.pushButton_13)
-        self.horizontalLayout_6.addLayout(self.verticalLayout_17)
-
-        self.pushButton_8 = QtWidgets.QPushButton(self.music_sliders_frame)
-        self.pushButton_8.setEnabled(False)
-        self.pushButton_8.setText("")
-        icon14 = QtGui.QIcon()
-        icon14.addPixmap(QtGui.QPixmap(":/icons/icons/guitar.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.pushButton_8.setIcon(icon14)
-        self.pushButton_8.setIconSize(QtCore.QSize(40, 40))
-        self.pushButton_8.setFlat(True)
-        self.pushButton_8.setStyleSheet("""
+        self.verticalLayout_12.addLayout(self.horizontalLayout_22)
+        
+        
+        self.pushButton_18 = QtWidgets.QPushButton(self.music_sliders_frame)
+        self.pushButton_18.setEnabled(False)
+        self.pushButton_18.setText("")
+        self.pushButton_18.setStyleSheet("""
                 background: transparent;
                 border: none;
                 outline: none;
-                """)    
-        self.pushButton_8.setObjectName("pushButton_8")
-        self.verticalLayout_12.addWidget(self.pushButton_8)
+                """)
+        # icon14 = QtGui.QIcon()
+        # icon14.addPixmap(QtGui.QPixmap(":/icons/icons/guitar.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        # self.pushButton_13.setIcon(icon13)
+        # self.pushButton_13.setIconSize(QtCore.QSize(40, 40))
+        self.pushButton_18.setFlat(True)
+        self.pushButton_18.setObjectName("pushButton_18")
+        self.verticalLayout_12.addWidget(self.pushButton_18)
         self.horizontalLayout_6.addLayout(self.verticalLayout_12)
+
+
+       
+        # self.pushButton_13 = QtWidgets.QPushButton(self.music_sliders_frame)
+        # self.pushButton_13.setEnabled(False)
+        # self.pushButton_13.setText("")
+        # self.pushButton_13.setStyleSheet("""
+        #         background: transparent;
+        #         border: none;
+        #         outline: none;
+        #         """)
+        # # icon14 = QtGui.QIcon()
+        # # icon14.addPixmap(QtGui.QPixmap(":/icons/icons/guitar.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        # # self.pushButton_13.setIcon(icon13)
+        # # self.pushButton_13.setIconSize(QtCore.QSize(40, 40))
+        # self.pushButton_13.setFlat(True)
+        # self.pushButton_13.setObjectName("pushButton_13")
+        # self.verticalLayout_17.addWidget(self.pushButton_13)
+        # self.horizontalLayout_6.addLayout(self.verticalLayout_17)
+
+        # self.pushButton_8 = QtWidgets.QPushButton(self.music_sliders_frame)
+        # self.pushButton_8.setEnabled(False)
+        # self.pushButton_8.setText("")
+        # icon14 = QtGui.QIcon()
+        # icon14.addPixmap(QtGui.QPixmap(":/icons/icons/guitar.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        # self.pushButton_8.setIcon(icon14)
+        # self.pushButton_8.setIconSize(QtCore.QSize(40, 40))
+        # self.pushButton_8.setFlat(True)
+        # self.pushButton_8.setStyleSheet("""
+        #         background: transparent;
+        #         border: none;
+        #         outline: none;
+        #         """)    
+        # self.pushButton_8.setObjectName("pushButton_8")
+        # self.verticalLayout_12.addWidget(self.pushButton_8)
+        # self.horizontalLayout_6.addLayout(self.verticalLayout_12)
 
         self.verticalLayout_11 = QtWidgets.QVBoxLayout()
         self.verticalLayout_11.setSpacing(12)
@@ -1149,10 +1188,10 @@ class Ui_MainWindow(object):
         self.pushButton_9 = QtWidgets.QPushButton(self.music_sliders_frame)
         self.pushButton_9.setEnabled(False)
         self.pushButton_9.setText("")
-        icon15 = QtGui.QIcon()
-        icon15.addPixmap(QtGui.QPixmap(":/icons/icons/violin.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.pushButton_9.setIcon(icon15)
-        self.pushButton_9.setIconSize(QtCore.QSize(40, 40))
+        # icon15 = QtGui.QIcon()
+        # icon15.addPixmap(QtGui.QPixmap(":/icons/icons/violin.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        # self.pushButton_9.setIcon(icon15)
+        # self.pushButton_9.setIconSize(QtCore.QSize(40, 40))
         self.pushButton_9.setFlat(True)
         self.pushButton_9.setStyleSheet("""
                 background: transparent;
@@ -1467,7 +1506,7 @@ class Ui_MainWindow(object):
         self.mode_comboBox.setItemText(0, _translate("MainWindow", "Uniform Mode"))
         self.mode_comboBox.setItemText(1, _translate("MainWindow", "Animal Mode"))
         self.mode_comboBox.setItemText(2, _translate("MainWindow", "Musical Mode"))
-        self.mode_comboBox.setItemText(3, _translate("MainWindow", "Weiner Filter"))
+        self.mode_comboBox.setItemText(3, _translate("MainWindow", "Wiener Filter"))
         self.replay_btn.setToolTip(_translate("MainWindow", "<html><head/><body><p>Replay activate siganls</p></body></html>"))
         self.replay_btn.setShortcut(_translate("MainWindow", "Ctrl+R"))
         self.play_pause_btn.setToolTip(_translate("MainWindow","<html><head/><body><p>Pause/Play Signals</p></body></html>"))
