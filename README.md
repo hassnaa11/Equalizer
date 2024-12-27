@@ -22,24 +22,24 @@ Signal Equalizer is a desktop application designed for manipulating frequency co
 - Divides the frequency spectrum of the signal into 10 equal ranges.
 - Each range is manipulated independently using a slider.
 
- ![](media\unifrom_mode.png)
+ ![](media/unifrom_mode.png)
 
 ### 2. Musical Instruments & Animal Sounds Mode
 - Control both specific musical instrument and animal sound components in a composite audio signal.
 
- ![](media\animal_mode.png)
+ ![](media/animal_mode.png)
 
 ### 3. Musical Instruments & Vowels Mode
 - Modify the magnitude of musical instruments and vowel sounds present in the signal.
 - Each slider can correspond to multiple frequency windows.
 
-![](media\music_mode.png)
+![](media/music_mode.png)
  
 ### 4. Wiener Filter Mode
 - Implement noise suppression or signal restoration.
 - Select noisy segment from original signal then apply filter to remove noise.
 
-![](media\wiener.png)
+![](media/wiener.png)
 ---
 
 ## Visualization
@@ -49,7 +49,7 @@ Signal Equalizer is a desktop application designed for manipulating frequency co
 
 ### DEMO
 
-![](media\equilizer_demo.gif)
+![](media/equilizer_demo.gif)
 
 ---
 
