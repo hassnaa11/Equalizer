@@ -105,7 +105,7 @@ class Equilizer(QMainWindow):
        
         # animal mode
         self.animal_sliders = {
-            "Snare": self.ui.Guitar_slider,
+            "Cymbals": self.ui.Guitar_slider,
             # "Cow": self.ui.extra_slider,
             "frog": self.ui.frog_slider,
             "horse": self.ui.extra2_slider,
@@ -120,7 +120,7 @@ class Equilizer(QMainWindow):
             # "Cow": [(250, 350)], 
             "flute": [(650,900)],
             "horse": [(900, 1500)],
-            "Snare":[(1500, 2700)],
+            "Cymbals":[(1500, 2700)],
             # "zebra": [(1200, 1500)],
             "frog": [(300, 650)], 
             "elephant": [(2700, 4500)],
@@ -132,13 +132,13 @@ class Equilizer(QMainWindow):
         self.ui.pushButton_5.setIcon(QIcon(f'icons/icons/frog-.png'))
         self.ui.pushButton_6.setIcon(QIcon(f'icons/icons/flute.png'))
         self.ui.pushButton_7.setIcon(QIcon(f'icons/icons/cricket.png'))
-        self.ui.pushButton_2.setIcon(QIcon(f'icons/icons/drums2.png'))
+        self.ui.pushButton_2.setIcon(QIcon(f'icons/icons/cymbals3.png'))
         self.ui.pushButton.setIcon(QIcon(f'icons/icons/dog.png'))
 
         self.ui.cricket_slider.valueChanged.connect(lambda: self.update_animal("cricket"))
         self.ui.flute_slider.valueChanged.connect(lambda: self.update_animal("flute"))
         self.ui.frog_slider.valueChanged.connect(lambda: self.update_animal("frog"))
-        self.ui.Guitar_slider.valueChanged.connect(lambda: self.update_animal("Snare"))
+        self.ui.Guitar_slider.valueChanged.connect(lambda: self.update_animal("Cymbals"))
         self.ui.dog_slider.valueChanged.connect(lambda: self.update_animal("dog"))
         
         self.ui.cricket_slider.setValue(100)
@@ -150,6 +150,19 @@ class Equilizer(QMainWindow):
         # self.ui.extra2_slider.setValue(0)
         # self.ui.extra3_slider.setValue(0)
         # self.ui.extra4_slider.setValue(0)
+        
+        
+        #####animal divisions#####
+        self.animal_slicers = {
+            "Cymbals": self.ui.pushButton_2,
+            "frog": self.ui.pushButton_5,
+            "flute": self.ui.pushButton_7,
+            "dog": self.ui.pushButton,
+            "cricket": self.ui.pushButton_9,
+        }
+        
+        
+        
         
         # end of animal mode
 
