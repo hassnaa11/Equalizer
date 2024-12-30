@@ -56,7 +56,7 @@ Signal Equalizer is a desktop application designed for manipulating frequency co
 ## How to Run
 1. Clone this repository:
    ```bash
-   git clone <repository_url>
+   git clone https://github.com/hassnaa11/Equalizer
    ```
 2. Install dependencies:
    ```bash
@@ -79,15 +79,46 @@ Signal Equalizer is a desktop application designed for manipulating frequency co
 
 ## Contributors
 
-[Yasmine Mahmoud](https://github.com/yasmine-msg79)
+<table align="center" width="100%">
+  <tr>
+    <td align="center" width="20%">
+      <a href="https://github.com/yasmine-msg79">
+        <img src="https://github.com/yasmine-msg79.png?size=100" style="width:80%;" alt="yasmine-msg79"/>
+      </a>
+      <br />
+      <a href="https://github.com/yasmine-msg79">yasmine Mahmoud</a>
+    </td>
+    <td align="center" width="20%">
+      <a href="https://github.com/hassnaa11">
+        <img src="https://github.com/hassnaa11.png?size=100" style="width:80%;" alt="hassnaa11"/>
+      </a>
+      <br />
+      <a href="https://github.com/hassnaa11">hassnaa11</a>
+    </td>
+    <td align="center" width="20%">
+      <a href="https://github.com/shahdragab89">
+        <img src="https://github.com/shahdragab89.png?size=100" style="width:80%;" alt="shahdragab89"/>
+      </a>
+      <br />
+      <a href="https://github.com/shahdragab89">shahdragab89</a>
+    </td>
+   <td align="center" width="20%">
+      <a href="https://github.com/Emaaanabdelazeemm">
+        <img src="https://github.com/Emaaanabdelazeemm.png?size=100" style="width:80%;" alt="Emaaanabdelazeemm"/>
+      </a>
+      <br />
+      <a href="https://github.com/Emaaanabdelazeemm">Emaaanabdelazeemm</a>
+    </td>
+   <td align="center" width="20%">
+      <a href="https://github.com/Ayat-Tarek">
+        <img src="https://github.com/Ayat-Tarek.png?size=100" style="width:80%;" alt="Ayat-Tarek"/>
+      </a>
+      <br />
+      <a href="https://github.com/Ayat-Tarek">Ayat Tarek</a>
+    </td>
+  </tr>
+</table>
 
-[Eman Abdelazeem](https://github.com/Emaaanabdelazeemm)
-
-[Hassnaa Hossam](https://github.com/hassnaa11)
-
-[Ayat Tarek](https://github.com/Ayat-Tarek)
-
-[Shahd Ahmed Ragab](https://github.com/shahdragab89)
 
 
 
