@@ -123,13 +123,13 @@ class Equilizer(QMainWindow):
             "cricket": self.ui.cricket_slider,
         }
         self.animal_ranges = { 
-            "dog":[(0, 300)],
+            "dog":[(0, 350)],
             # "Cow": [(250, 350)], 
             "flute": [(650,900)],
             "horse": [(900, 1500)],
             "Cymbals":[(1500, 2700)],
             # "zebra": [(1200, 1500)],
-            "frog": [(300, 650)], 
+            "frog": [(350, 650)], 
             "elephant": [(2700, 4500)],
             "cricket": [(4500, 18500)], 
                
