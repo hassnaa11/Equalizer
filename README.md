@@ -22,7 +22,7 @@ Signal Equalizer is a desktop application designed for manipulating frequency co
 - Divides the frequency spectrum of the signal into 10 equal ranges.
 - Each range is manipulated independently using a slider.
 
- ![](media/unifrom_mode.png)
+ ![](https://github.com/user-attachments/assets/7bcc2666-e578-4140-8757-fc95095cb8a0)
 
 ### 2. Musical Instruments & Animal Sounds Mode
 - Control both specific musical instrument and animal sound components in a composite audio signal.
