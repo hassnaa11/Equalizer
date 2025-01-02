@@ -86,7 +86,7 @@ Signal Equalizer is a desktop application designed for manipulating frequency co
         <img src="https://github.com/yasmine-msg79.png?size=100" style="width:80%;" alt="yasmine-msg79"/>
       </a>
       <br />
-      <a href="https://github.com/yasmine-msg79">yasmine Mahmoud</a>
+      <a href="https://github.com/yasmine-msg79">Yasmine Mahmoud</a>
     </td>
     <td align="center" width="20%">
       <a href="https://github.com/hassnaa11">
